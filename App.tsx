@@ -12,12 +12,12 @@ const CommunityView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
     <div className="space-y-4">
       <div className="bg-gray-800 p-4 rounded-lg">
         <h3 className="text-xl font-semibold text-teal-400">OO은행에서 사용해보신 분 계신가요?</h3>
-        <p className="text-gray-400 text-sm">작성자: 사용자123 | 2024-05-20</p>
+        <p className="text-gray-400 text-sm">작성자: 사용자 | 2025-05-20</p>
         <p className="mt-2">모바일 신분증으로 OO은행에서 계좌 개설 성공했습니다! 직원분도 별 문제 없이 처리해주셨어요.</p>
       </div>
       <div className="bg-gray-800 p-4 rounded-lg">
         <h3 className="text-xl font-semibold text-teal-400">XX편의점에서 담배 살 때 되나요?</h3>
-        <p className="text-gray-400 text-sm">작성자: 궁금이 | 2024-05-19</p>
+        <p className="text-gray-400 text-sm">작성자: 궁금이 | 2025-05-19</p>
         <p className="mt-2">얼마 전에 XX편의점에서 모바일 운전면허증으로 성인인증하고 담배 샀습니다. 바코드 찍으니까 바로 됐어요.</p>
       </div>
     </div>
@@ -112,7 +112,16 @@ const SuggestionView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
 const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }) => {
-    const cards = [
+  useEffect(() => {
+    // Google AdSense 광고 초기화
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch (e) {
+      console.error('AdSense error:', e);
+    }
+  }, []);
+
+  const cards = [
     {
       type: 'link',
       label: '발급 바로가기',
@@ -152,12 +161,58 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       view: 'report',
       icon: 'fa-solid fa-lightbulb',
       theme: 'pink'
+    },
+    {
+      type: 'ad',
+      label: 'Ad',
+      backLabel: 'Advertisement',
+      icon: 'fa-solid fa-ad',
+      theme: 'purple'
     }
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
       {cards.map((card, index) => {
+        // 6번째 카드(index 5)일 때 광고 표시
+        if (card.type === 'ad') {
+          return (
+            <div key={index} className={`card ${card.theme}`}>
+              <div className="content">
+                <div className="back">
+                  <div className="back-content">
+                    <ins className="adsbygoogle"
+                         style={{ display: 'block', width: '100%', height: '100%' }}
+                         data-ad-client="ca-pub-2686975437928535"
+                         data-ad-slot="YOUR_AD_SLOT_ID"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                  </div>
+                </div>
+                <div className="front">
+                  <div className="img">
+                    <div className="circle"></div>
+                    <div className="circle" id="right"></div>
+                    <div className="circle" id="bottom"></div>
+                  </div>
+                  <div className="front-content">
+                    <div className="description">
+                      <div className="title">
+                        <ins className="adsbygoogle"
+                             style={{ display: 'block', width: '100%', height: '100%' }}
+                             data-ad-client="ca-pub-2686975437928535"
+                             data-ad-slot="YOUR_AD_SLOT_ID"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         const cardContent = (
           <div className={`card ${card.theme}`} onClick={card.type === 'nav' ? () => onNavigate(card.view as View) : undefined}>
             <div className="content">
