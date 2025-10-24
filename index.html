@@ -202,6 +202,25 @@
   .card.pink #bottom { background-color: #db2777; }
   .card.pink #right { background-color: #f9a8d4; }
 
+  /* Red Theme */
+  .card.red .back::before { background: linear-gradient(90deg, transparent, #ef4444, #ef4444, #ef4444, #ef4444, transparent); }
+  .card.red .circle { background-color: #f87171; }
+  .card.red #bottom { background-color: #dc2626; }
+  .card.red #right { background-color: #fca5a5; }
+
+  /* Ad Container Orange Theme */
+  .ad-container {
+    width: 190px;
+    height: 254px;
+    background: linear-gradient(135deg, #ff9966, #ff8866);
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px 1px #000000ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
   .hidden { display: none; }
 
   /* Exit modal styles */
@@ -328,7 +347,7 @@
 
       <!-- 모바일 건강보험증 -->
       <a href="https://mobile-id2.car-hotissue.com/%eb%aa%a8%eb%b0%94%ec%9d%bc-%ea%b1%b4%ea%b0%95%eb%b3%b4%ed%97%98%ec%a6%9d-%eb%b0%9c%ea%b8%89/">
-        <div class="card orange">
+        <div class="card red">
           <div class="content">
             <div class="back">
               <div class="back-content">
@@ -419,8 +438,8 @@
         </div>
       </div>
 
-      <!-- Google AdSense Display Ad (Card Size) -->
-      <div class="flex items-center justify-center" style="width: 190px; height: 254px;">
+      <!-- Google AdSense Display Ad (Card Size with Orange Theme) -->
+      <div class="ad-container">
         <ins class="adsbygoogle"
              style="display:inline-block;width:190px;height:254px"
              data-ad-client="ca-pub-2686975437928535"
