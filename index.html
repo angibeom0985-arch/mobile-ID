@@ -427,14 +427,39 @@
   </div>
 
   <script>
-    // View management
-    function showView(viewName) {
+    // Initialize with main view
+    let currentView = 'main';
+
+    // View management with history support
+    function showView(viewName, addToHistory = true) {
       const views = ['main', 'community', 'report'];
       views.forEach(view => {
         document.getElementById(view + 'View').classList.add('hidden');
       });
       document.getElementById(viewName + 'View').classList.remove('hidden');
+      currentView = viewName;
+
+      // Add to browser history
+      if (addToHistory && viewName !== 'main') {
+        history.pushState({ view: viewName }, '', '#' + viewName);
+      } else if (viewName === 'main') {
+        history.pushState({ view: 'main' }, '', '#');
+      }
     }
+
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+      if (event.state && event.state.view) {
+        showView(event.state.view, false);
+      } else {
+        showView('main', false);
+      }
+    });
+
+    // Initialize history state
+    window.addEventListener('load', function() {
+      history.replaceState({ view: 'main' }, '', '#');
+    });
 
     // Community post submission
     function submitCommunityPost() {
