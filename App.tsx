@@ -114,11 +114,22 @@ const SuggestionView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }) => {
   useEffect(() => {
     // Google AdSense 광고 초기화
-    try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-    } catch (e) {
-      console.error('AdSense error:', e);
-    }
+    const loadAds = () => {
+      try {
+        if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+          const ads = document.querySelectorAll('.adsbygoogle');
+          ads.forEach(() => {
+            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+          });
+        }
+      } catch (e) {
+        console.error('AdSense error:', e);
+      }
+    };
+    
+    // 광고 스크립트 로드 후 초기화
+    const timer = setTimeout(loadAds, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const cards = [
@@ -184,7 +195,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
                     <ins className="adsbygoogle"
                          style={{ display: 'block', width: '100%', height: '100%' }}
                          data-ad-client="ca-pub-2686975437928535"
-                         data-ad-slot="YOUR_AD_SLOT_ID"
+                         data-ad-slot="1992799632"
                          data-ad-format="auto"
                          data-full-width-responsive="true"></ins>
                   </div>
@@ -201,7 +212,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
                         <ins className="adsbygoogle"
                              style={{ display: 'block', width: '100%', height: '100%' }}
                              data-ad-client="ca-pub-2686975437928535"
-                             data-ad-slot="YOUR_AD_SLOT_ID"
+                             data-ad-slot="1992799632"
                              data-ad-format="auto"
                              data-full-width-responsive="true"></ins>
                       </div>
@@ -252,6 +263,16 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
         }
         return <div key={index} className="cursor-pointer">{cardContent}</div>;
       })}
+      
+      {/* 카드 그리드 아래 디스플레이 광고 */}
+      <div className="col-span-2 md:col-span-3 lg:col-span-5 w-full max-w-4xl mx-auto mt-8">
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-pub-2686975437928535"
+             data-ad-slot="1992799632"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
     </div>
   );
 };
