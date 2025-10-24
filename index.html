@@ -203,10 +203,63 @@
   .card.pink #right { background-color: #f9a8d4; }
 
   .hidden { display: none; }
+
+  /* Exit modal styles */
+  #exitModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  #exitModal.show {
+    display: flex;
+  }
+
+  .modal-content {
+    background-color: #1f2937;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+  }
 </style>
 </head>
 <body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
   
+  <!-- Exit Confirmation Modal -->
+  <div id="exitModal">
+    <div class="modal-content">
+      <h2 class="text-white text-2xl font-bold mb-4">앱을 종료하시겠습니까?</h2>
+      
+      <!-- Google AdSense Display Ad -->
+      <div class="my-4">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-2686975437928535"
+             data-ad-slot="1992799632"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button onclick="cancelExit()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          취소
+        </button>
+        <button onclick="confirmExit()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          종료
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main View -->
   <div id="mainView" class="view">
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
@@ -449,7 +502,12 @@
 
     // Handle browser back button
     window.addEventListener('popstate', function(event) {
-      if (event.state && event.state.view) {
+      if (currentView === 'main') {
+        // Show exit modal when trying to exit from main view
+        event.preventDefault();
+        showExitModal();
+        history.pushState({ view: 'main' }, '', '#');
+      } else if (event.state && event.state.view) {
         showView(event.state.view, false);
       } else {
         showView('main', false);
@@ -459,7 +517,33 @@
     // Initialize history state
     window.addEventListener('load', function() {
       history.replaceState({ view: 'main' }, '', '#');
+      // Initialize AdSense
+      (adsbygoogle = window.adsbygoogle || []).push({});
     });
+
+    // Exit modal functions
+    function showExitModal() {
+      document.getElementById('exitModal').classList.add('show');
+      // Reload AdSense ad
+      try {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.log('AdSense load error:', e);
+      }
+    }
+
+    function cancelExit() {
+      document.getElementById('exitModal').classList.remove('show');
+      history.pushState({ view: 'main' }, '', '#');
+    }
+
+    function confirmExit() {
+      window.close();
+      // If window.close() doesn't work (browser restriction), show message
+      setTimeout(function() {
+        alert('브라우저 설정으로 인해 자동 종료가 불가능합니다. 수동으로 탭을 닫아주세요.');
+      }, 100);
+    }
 
     // Community post submission
     function submitCommunityPost() {
