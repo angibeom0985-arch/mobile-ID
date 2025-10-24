@@ -527,19 +527,23 @@
       }
     }
 
-    // Track if we should show exit modal
-    let shouldShowExitModal = false;
+    // Track if exit modal is showing
+    let isExitModalShowing = false;
 
     // Handle browser back button
     window.addEventListener('popstate', function(event) {
-      if (currentView === 'main' && !shouldShowExitModal) {
-        // First back press on main view - show exit modal
-        shouldShowExitModal = true;
+      if (isExitModalShowing) {
+        // If modal is showing, close it
+        cancelExit();
+        return;
+      }
+
+      if (currentView === 'main') {
+        // Show exit modal when trying to exit from main view
         showExitModal();
         history.pushState({ view: 'main' }, '', '#');
       } else if (currentView !== 'main') {
         // Navigate back from sub-views
-        shouldShowExitModal = false;
         if (event.state && event.state.view) {
           showView(event.state.view, false);
         } else {
@@ -561,8 +565,9 @@
 
     // Exit modal functions
     function showExitModal() {
+      isExitModalShowing = true;
       document.getElementById('exitModal').classList.add('show');
-      // Load AdSense ad
+      // Load AdSense ad in modal
       setTimeout(function() {
         try {
           (adsbygoogle = window.adsbygoogle || []).push({});
@@ -573,21 +578,28 @@
     }
 
     function cancelExit() {
-      shouldShowExitModal = false;
+      isExitModalShowing = false;
       document.getElementById('exitModal').classList.remove('show');
+      // Keep user on main view
       history.pushState({ view: 'main' }, '', '#');
     }
 
     function confirmExit() {
+      isExitModalShowing = false;
       // Try to close the window/tab
-      window.close();
-      
-      // If window.close() doesn't work, try going back in history to exit
-      setTimeout(function() {
-        if (!window.closed) {
-          history.back();
-        }
-      }, 100);
+      if (window.opener !== null) {
+        window.close();
+      } else {
+        // If can't close, go back
+        window.history.go(-2); // Go back twice to skip the modal state
+      }
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // Community post submission
@@ -604,9 +616,9 @@
         postDiv.innerHTML = `
           <div class="flex justify-between items-start mb-2">
             <h3 class="text-xl font-semibold text-teal-400">사용자 게시글</h3>
-            <span class="text-gray-400 text-sm">${timestamp}</span>
+            <span class="text-gray-400 text-sm">${escapeHtml(timestamp)}</span>
           </div>
-          <p class="text-white mt-2">${text}</p>
+          <p class="text-white mt-2">${escapeHtml(text)}</p>
         `;
         
         postsContainer.insertBefore(postDiv, postsContainer.firstChild);
@@ -634,10 +646,10 @@
         suggestionDiv.className = 'bg-gray-800 p-4 rounded-lg';
         suggestionDiv.innerHTML = `
           <div class="flex justify-between items-start mb-2">
-            <span class="bg-pink-600 text-white text-sm px-3 py-1 rounded-full">${type}</span>
-            <span class="text-gray-400 text-sm">${timestamp}</span>
+            <span class="bg-pink-600 text-white text-sm px-3 py-1 rounded-full">${escapeHtml(type)}</span>
+            <span class="text-gray-400 text-sm">${escapeHtml(timestamp)}</span>
           </div>
-          <p class="text-white mt-2">${details}</p>
+          <p class="text-white mt-2">${escapeHtml(details)}</p>
         `;
         
         suggestionsContainer.appendChild(suggestionDiv);
