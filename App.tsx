@@ -106,7 +106,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
   ];
 
   return (
-    <div className="flex flex-wrap justify-center items-center gap-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
       {cards.map((card, index) => {
         const cardContent = (
           <div className={`card ${card.theme}`} onClick={card.type === 'nav' ? () => onNavigate(card.view as View) : undefined}>
