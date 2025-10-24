@@ -500,48 +500,60 @@
       }
     }
 
+    // Track if we should show exit modal
+    let shouldShowExitModal = false;
+
     // Handle browser back button
     window.addEventListener('popstate', function(event) {
-      if (currentView === 'main') {
-        // Show exit modal when trying to exit from main view
-        event.preventDefault();
+      if (currentView === 'main' && !shouldShowExitModal) {
+        // First back press on main view - show exit modal
+        shouldShowExitModal = true;
         showExitModal();
         history.pushState({ view: 'main' }, '', '#');
-      } else if (event.state && event.state.view) {
-        showView(event.state.view, false);
-      } else {
-        showView('main', false);
+      } else if (currentView !== 'main') {
+        // Navigate back from sub-views
+        shouldShowExitModal = false;
+        if (event.state && event.state.view) {
+          showView(event.state.view, false);
+        } else {
+          showView('main', false);
+        }
       }
     });
 
     // Initialize history state
     window.addEventListener('load', function() {
       history.replaceState({ view: 'main' }, '', '#');
-      // Initialize AdSense
-      (adsbygoogle = window.adsbygoogle || []).push({});
     });
 
     // Exit modal functions
     function showExitModal() {
       document.getElementById('exitModal').classList.add('show');
-      // Reload AdSense ad
-      try {
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.log('AdSense load error:', e);
-      }
+      // Load AdSense ad
+      setTimeout(function() {
+        try {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+          console.log('AdSense load error:', e);
+        }
+      }, 100);
     }
 
     function cancelExit() {
+      shouldShowExitModal = false;
       document.getElementById('exitModal').classList.remove('show');
       history.pushState({ view: 'main' }, '', '#');
     }
 
     function confirmExit() {
+      // Try to close the window/tab
       window.close();
-      // If window.close() doesn't work (browser restriction), show message
+      
+      // If window.close() doesn't work, try going back in history to exit
       setTimeout(function() {
-        alert('브라우저 설정으로 인해 자동 종료가 불가능합니다. 수동으로 탭을 닫아주세요.');
+        if (!window.closed) {
+          history.back();
+        }
       }, 100);
     }
 
