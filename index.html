@@ -441,9 +441,10 @@
       <!-- Google AdSense Display Ad (Card Size with Orange Theme) -->
       <div class="ad-container">
         <ins class="adsbygoogle"
-             style="display:inline-block;width:190px;height:254px"
+             style="display:block;width:190px;height:254px"
              data-ad-client="ca-pub-2686975437928535"
-             data-ad-slot="1992799632"></ins>
+             data-ad-slot="1992799632"
+             data-ad-format="auto"></ins>
       </div>
 
     </div>
@@ -555,12 +556,18 @@
     // Initialize history state
     window.addEventListener('load', function() {
       history.replaceState({ view: 'main' }, '', '#');
-      // Initialize AdSense ads
-      try {
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.log('AdSense initialization error:', e);
-      }
+      
+      // Initialize AdSense ads after page load
+      setTimeout(function() {
+        try {
+          const ads = document.querySelectorAll('.adsbygoogle');
+          ads.forEach(function() {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          });
+        } catch (e) {
+          console.log('AdSense initialization error:', e);
+        }
+      }, 500);
     });
 
     // Exit modal functions
