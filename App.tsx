@@ -31,34 +31,84 @@ const CommunityView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   </div>
 );
 
-const SuggestionView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <div className="text-white w-full max-w-2xl mx-auto p-4 md:p-8">
-    <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-      <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
-    </button>
-    <div className="bg-gray-800 p-6 rounded-lg">
-      <h2 className="text-3xl font-bold mb-6 text-center">새로운 기능 제안</h2>
-      <form className="space-y-4">
-        <div>
-          <label htmlFor="suggestion-type" className="block text-lg font-medium mb-2">건의 종류</label>
-          <select id="suggestion-type" className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-pink-500 focus:outline-none">
-            <option>UI/UX 개선</option>
-            <option>신규 기능 추가</option>
-            <option>오류 신고</option>
-            <option>기타</option>
-          </select>
+const SuggestionView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [suggestionType, setSuggestionType] = useState('UI/UX 개선');
+  const [suggestionDetails, setSuggestionDetails] = useState('');
+  const [suggestions, setSuggestions] = useState<Array<{type: string, details: string, timestamp: string}>>([]);
+
+  const handleSubmit = () => {
+    if (suggestionDetails.trim()) {
+      const newSuggestion = {
+        type: suggestionType,
+        details: suggestionDetails,
+        timestamp: new Date().toLocaleString('ko-KR')
+      };
+      setSuggestions([newSuggestion, ...suggestions]);
+      setSuggestionDetails('');
+    }
+  };
+
+  return (
+    <div className="text-white w-full max-w-2xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h2 className="text-3xl font-bold mb-6 text-center">새로운 기능 제안</h2>
+        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <div>
+            <label htmlFor="suggestion-type" className="block text-lg font-medium mb-2">건의 종류</label>
+            <select 
+              id="suggestion-type" 
+              value={suggestionType}
+              onChange={(e) => setSuggestionType(e.target.value)}
+              className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-pink-500 focus:outline-none"
+            >
+              <option>UI/UX 개선</option>
+              <option>신규 기능 추가</option>
+              <option>오류 신고</option>
+              <option>기타</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="suggestion-details" className="block text-lg font-medium mb-2">상세 내용</label>
+            <textarea 
+              id="suggestion-details" 
+              value={suggestionDetails}
+              onChange={(e) => setSuggestionDetails(e.target.value)}
+              className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-pink-500 focus:outline-none" 
+              rows={5} 
+              placeholder="앱을 더 발전시킬 수 있는 아이디어를 자유롭게 작성해주세요."
+            ></textarea>
+          </div>
+          <button 
+            type="button" 
+            onClick={handleSubmit}
+            className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+          >
+            제안 제출하기
+          </button>
+        </form>
+      </div>
+
+      {/* 제안 목록 */}
+      {suggestions.length > 0 && (
+        <div className="mt-6 space-y-4">
+          <h3 className="text-2xl font-bold mb-4">제출된 제안</h3>
+          {suggestions.map((suggestion, index) => (
+            <div key={index} className="bg-gray-800 p-4 rounded-lg">
+              <div className="flex justify-between items-start mb-2">
+                <span className="bg-pink-600 text-white text-sm px-3 py-1 rounded-full">{suggestion.type}</span>
+                <span className="text-gray-400 text-sm">{suggestion.timestamp}</span>
+              </div>
+              <p className="text-white mt-2">{suggestion.details}</p>
+            </div>
+          ))}
         </div>
-        <div>
-          <label htmlFor="suggestion-details" className="block text-lg font-medium mb-2">상세 내용</label>
-          <textarea id="suggestion-details" className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-pink-500 focus:outline-none" rows={5} placeholder="앱을 더 발전시킬 수 있는 아이디어를 자유롭게 작성해주세요."></textarea>
-        </div>
-        <button type="button" className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-          제안 제출하기
-        </button>
-      </form>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 
 const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }) => {
