@@ -55,19 +55,27 @@ const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const fetchOilPrices = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'https://www.opinet.co.kr/api/avgAllPrice.do?code=F251104981&out=json'
-      );
+      setError('');
+      
+      // CORS 우회를 위한 프록시 사용
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const apiUrl = encodeURIComponent('https://www.opinet.co.kr/api/avgAllPrice.do?code=F251104981&out=json');
+      
+      const response = await fetch(proxyUrl + apiUrl);
+      
+      if (!response.ok) {
+        throw new Error('네트워크 응답이 올바르지 않습니다.');
+      }
+      
       const data = await response.json();
       
       if (data.RESULT && data.RESULT.OIL) {
         setOilPrices(data.RESULT.OIL);
       } else {
-        setError('데이터를 불러올 수 없습니다.');
+        setError('유가 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
       }
     } catch (err) {
-      setError('API 호출 중 오류가 발생했습니다.');
-      console.error(err);
+      setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -147,10 +155,38 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [locationPermission, setLocationPermission] = useState<'prompt' | 'granted' | 'denied'>('prompt');
 
   useEffect(() => {
-    getUserLocation();
+    checkLocationPermission();
   }, []);
+
+  const checkLocationPermission = async () => {
+    if ('permissions' in navigator) {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        setLocationPermission(result.state as 'prompt' | 'granted' | 'denied');
+        if (result.state === 'granted') {
+          getUserLocation();
+        } else if (result.state === 'prompt') {
+          setLoading(false);
+        } else {
+          setError('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+          setLoading(false);
+        }
+      } catch {
+        getUserLocation();
+      }
+    } else {
+      getUserLocation();
+    }
+  };
+
+  const requestLocation = () => {
+    setLoading(true);
+    setError('');
+    getUserLocation();
+  };
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -161,11 +197,24 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             lng: position.coords.longitude
           };
           setUserLocation(location);
+          setLocationPermission('granted');
           fetchNearbyStations(location.lat, location.lng);
         },
         (error) => {
-          setError('위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요.');
+          setLocationPermission('denied');
+          if (error.code === error.PERMISSION_DENIED) {
+            setError('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            setError('위치 정보를 사용할 수 없습니다. GPS가 활성화되어 있는지 확인해주세요.');
+          } else {
+            setError('위치 정보를 가져오는 중 오류가 발생했습니다.');
+          }
           setLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
@@ -177,19 +226,28 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const fetchNearbyStations = async (lat: number, lng: number) => {
     try {
       setLoading(true);
-      const response = await fetch(
+      setError('');
+      
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const apiUrl = encodeURIComponent(
         `https://www.opinet.co.kr/api/aroundAll.do?code=F251104981&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`
       );
+      
+      const response = await fetch(proxyUrl + apiUrl);
+      
+      if (!response.ok) {
+        throw new Error('네트워크 응답이 올바르지 않습니다.');
+      }
+      
       const data = await response.json();
       
       if (data.RESULT && data.RESULT.OIL) {
         setStations(data.RESULT.OIL);
       } else {
-        setError('주변 주유소 정보를 불러올 수 없습니다.');
+        setError('주변 주유소 정보를 찾을 수 없습니다.');
       }
     } catch (err) {
-      setError('API 호출 중 오류가 발생했습니다.');
-      console.error(err);
+      setError('주유소 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -205,6 +263,21 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         내 주변 주유소
       </h2>
 
+      {locationPermission === 'prompt' && !loading && !error && (
+        <div className="bg-blue-900/30 border border-blue-500 text-blue-300 p-6 rounded-lg text-center">
+          <i className="fa-solid fa-location-crosshairs text-4xl mb-4"></i>
+          <h3 className="text-xl font-bold mb-2">위치 권한이 필요합니다</h3>
+          <p className="text-gray-300 mb-4">주변 주유소를 찾기 위해 현재 위치 정보가 필요합니다.</p>
+          <button
+            onClick={requestLocation}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+          >
+            <i className="fa-solid fa-location-arrow mr-2"></i>
+            위치 권한 허용하기
+          </button>
+        </div>
+      )}
+
       {loading && (
         <div className="text-center py-8">
           <i className="fa-solid fa-spinner fa-spin text-4xl text-blue-400"></i>
@@ -215,7 +288,16 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {error && (
         <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg">
           <i className="fa-solid fa-exclamation-triangle mr-2"></i>
-          {error}
+          <p>{error}</p>
+          {locationPermission === 'denied' && (
+            <button
+              onClick={requestLocation}
+              className="mt-4 bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <i className="fa-solid fa-rotate mr-2"></i>
+              다시 시도
+            </button>
+          )}
         </div>
       )}
 
@@ -300,17 +382,22 @@ const WeatherView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const fetchWeatherData = async (lat: number, lng: number) => {
     try {
       setLoading(true);
+      setError('');
+      
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
       
       // 기상청 API 호출 (세차 지수)
-      const carWashResponse = await fetch(
+      const carWashUrl = encodeURIComponent(
         `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getCarWashIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
       );
+      const carWashResponse = await fetch(proxyUrl + carWashUrl);
       const carWashData = await carWashResponse.json();
       
       // 대기오염 정보 API 호출
-      const airResponse = await fetch(
+      const airUrl = encodeURIComponent(
         `https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&returnType=json&numOfRows=1&pageNo=1&sidoName=서울&ver=1.0`
       );
+      const airResponse = await fetch(proxyUrl + airUrl);
       const airData = await airResponse.json();
 
       // 데이터 파싱
@@ -330,8 +417,7 @@ const WeatherView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         warning: '현재 특보가 없습니다.'
       });
     } catch (err) {
-      setError('날씨 정보를 불러오는 중 오류가 발생했습니다.');
-      console.error(err);
+      setError('날씨 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -446,11 +532,14 @@ const HealthView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const fetchHealthData = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // 생활기상지수 API 호출 (서울 기준)
-      const response = await fetch(
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const apiUrl = encodeURIComponent(
         `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
       );
+      
+      const response = await fetch(proxyUrl + apiUrl);
       const data = await response.json();
       
       const items = data.response?.body?.items?.item || [];
@@ -470,8 +559,7 @@ const HealthView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       });
     } catch (err) {
-      setError('건강 정보를 불러오는 중 오류가 발생했습니다.');
-      console.error(err);
+      setError('건강 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -622,10 +710,13 @@ const ParkingView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const serviceKey = '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9';
-      const response = await fetch(
+      const apiUrl = encodeURIComponent(
         `https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc?page=1&perPage=50&serviceKey=${serviceKey}&returnType=JSON`
       );
+      
+      const response = await fetch(proxyUrl + apiUrl);
 
       if (!response.ok) {
         throw new Error('주차장 정보를 가져올 수 없습니다.');
@@ -651,8 +742,7 @@ const ParkingView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setParkingLots([]);
       }
     } catch (err) {
-      setError('주차장 정보를 불러오는 중 오류가 발생했습니다.');
-      console.error(err);
+      setError('주차장 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
