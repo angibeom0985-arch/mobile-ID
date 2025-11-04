@@ -868,18 +868,26 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
   useEffect(() => {
     const loadAds = () => {
       try {
-        if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+        if (typeof window !== 'undefined') {
           const ads = document.querySelectorAll('.adsbygoogle');
-          ads.forEach(() => {
-            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-          });
+          if (ads.length > 0 && (window as any).adsbygoogle) {
+            ads.forEach((ad) => {
+              if (!ad.hasAttribute('data-adsbygoogle-status')) {
+                try {
+                  ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+                } catch (err) {
+                  // AdSense 로드 실패는 무시
+                }
+              }
+            });
+          }
         }
       } catch (e) {
-        console.error('AdSense error:', e);
+        // 광고 로드 실패는 조용히 처리
       }
     };
     
-    const timer = setTimeout(loadAds, 100);
+    const timer = setTimeout(loadAds, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -1097,20 +1105,17 @@ const App: React.FC = () => {
 
   const navigateToView = (newView: View) => {
     if (newView === 'main') {
-      window.history.pushState(null, '', window.location.pathname);
+      window.history.replaceState(null, '', window.location.pathname);
+      setView('main');
     } else {
       window.location.hash = newView;
+      setView(newView);
     }
-    setView(newView);
   };
 
   const goBack = () => {
-    window.history.back();
-    setTimeout(() => {
-      if (window.location.hash === '') {
-        setView('main');
-      }
-    }, 10);
+    setView('main');
+    window.history.replaceState(null, '', window.location.pathname);
   };
 
   const renderView = () => {
