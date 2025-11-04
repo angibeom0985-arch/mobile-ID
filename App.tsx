@@ -1080,23 +1080,56 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
 const App: React.FC = () => {
   const [view, setView] = useState<View>('main');
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1) as View;
+      if (hash && hash !== 'main') {
+        setView(hash);
+      } else {
+        setView('main');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateToView = (newView: View) => {
+    if (newView === 'main') {
+      window.history.pushState(null, '', window.location.pathname);
+    } else {
+      window.location.hash = newView;
+    }
+    setView(newView);
+  };
+
+  const goBack = () => {
+    window.history.back();
+    setTimeout(() => {
+      if (window.location.hash === '') {
+        setView('main');
+      }
+    }, 10);
+  };
+
   const renderView = () => {
     switch (view) {
       case 'oil':
-        return <OilPriceView onBack={() => setView('main')} />;
+        return <OilPriceView onBack={goBack} />;
       case 'station':
-        return <GasStationView onBack={() => setView('main')} />;
+        return <GasStationView onBack={goBack} />;
       case 'weather':
-        return <WeatherView onBack={() => setView('main')} />;
+        return <WeatherView onBack={goBack} />;
       case 'health':
-        return <HealthView onBack={() => setView('main')} />;
+        return <HealthView onBack={goBack} />;
       case 'parking':
-        return <ParkingView onBack={() => setView('main')} />;
+        return <ParkingView onBack={goBack} />;
       case 'report':
-        return <SuggestionView onBack={() => setView('main')} />;
+        return <SuggestionView onBack={goBack} />;
       case 'main':
       default:
-        return <MainView onNavigate={setView} />;
+        return <MainView onNavigate={navigateToView} />;
     }
   };
 
