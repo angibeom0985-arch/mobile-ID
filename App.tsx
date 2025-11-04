@@ -58,10 +58,15 @@ const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setError('');
       
       // CORS 우회를 위한 프록시 사용
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const proxyUrl = 'https://corsproxy.io/?';
       const apiUrl = encodeURIComponent('https://www.opinet.co.kr/api/avgAllPrice.do?code=F251104981&out=json');
       
-      const response = await fetch(proxyUrl + apiUrl);
+      const response = await fetch(proxyUrl + apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
       
       if (!response.ok) {
         throw new Error('네트워크 응답이 올바르지 않습니다.');
@@ -228,7 +233,7 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const proxyUrl = 'https://corsproxy.io/?';
       const apiUrl = encodeURIComponent(
         `https://www.opinet.co.kr/api/aroundAll.do?code=F251104981&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`
       );
@@ -384,7 +389,7 @@ const WeatherView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const proxyUrl = 'https://corsproxy.io/?';
       
       // 기상청 API 호출 (세차 지수)
       const carWashUrl = encodeURIComponent(
@@ -534,7 +539,7 @@ const HealthView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const proxyUrl = 'https://corsproxy.io/?';
       const apiUrl = encodeURIComponent(
         `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
       );
@@ -710,7 +715,7 @@ const ParkingView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const proxyUrl = 'https://corsproxy.io/?';
       const serviceKey = '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9';
       const apiUrl = encodeURIComponent(
         `https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc?page=1&perPage=50&serviceKey=${serviceKey}&returnType=JSON`
@@ -1062,7 +1067,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
           </h2>
           <p className="text-gray-400 text-sm md:text-base">발급 방법을 확인하고 바로 발급받으세요</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 justify-items-center max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 justify-items-center max-w-4xl mx-auto">
           {issuanceCards.map((card, index) => {
             const cardContent = (
               <div className={`card ${card.theme}`}>
