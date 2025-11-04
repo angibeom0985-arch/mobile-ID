@@ -3,6 +3,45 @@ import React, { useState, useEffect } from 'react';
 
 type View = 'main' | 'community' | 'report';
 
+// 간단한 장소 DB 샘플 (관리자가 입력하는 CPT 형태의 데이터 예시)
+type Place = {
+  id: string;
+  name: string;
+  accepts: {
+    residentID?: boolean;
+    driverLicense?: boolean;
+    healthInsurance?: boolean;
+  };
+  reports?: Array<{ success: boolean; message: string; ts: string }>;
+};
+
+const PLACE_DB: Place[] = [
+  {
+    id: 'p1',
+    name: '강남역 OO병원',
+    accepts: { residentID: true, driverLicense: false, healthInsurance: true },
+    reports: [
+      { success: true, message: '모바일 건강보험증으로 접수 성공', ts: '2025-11-03' },
+      { success: false, message: '운전면허는 확인 불가', ts: '2025-10-28' }
+    ]
+  },
+  {
+    id: 'p2',
+    name: '역삼동 OO은행',
+    accepts: { residentID: true, driverLicense: true, healthInsurance: false },
+    reports: [
+      { success: true, message: '모바일 주민등록증으로 계좌 개설 가능', ts: '2025-10-30' }
+    ]
+  },
+  {
+    id: 'p3',
+    name: '수도권 OO약국',
+    accepts: { residentID: false, driverLicense: false, healthInsurance: true },
+    reports: [
+      { success: true, message: '건강보험증 바코드 인식됨', ts: '2025-10-29' }
+    ]
+  }
+];
 const CommunityView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <div className="text-white w-full max-w-4xl mx-auto p-4 md:p-8">
     <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
@@ -132,6 +171,19 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
     return () => clearTimeout(timer);
   }, []);
 
+  const [query, setQuery] = useState('');
+  const [searchResult, setSearchResult] = useState<Place | null>(null);
+
+  const handleSearch = () => {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      setSearchResult(null);
+      return;
+    }
+    const found = PLACE_DB.find(p => p.name.toLowerCase().includes(q));
+    setSearchResult(found || null);
+  };
+
   const cards = [
     {
       type: 'link',
@@ -183,7 +235,66 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
+    <div className="w-full max-w-5xl mx-auto">
+      {/* 초간단 검색 UI */}
+      <div className="w-full max-w-4xl mx-auto mb-6 px-2">
+        <label className="sr-only">방문지 검색</label>
+        <div className="flex gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            className="flex-1 p-3 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-teal-500"
+            placeholder="예: 강남역 OO병원, 역삼동 OO은행"
+            aria-label="방문지 검색"
+          />
+          <button onClick={handleSearch} className="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-md">검색</button>
+        </div>
+        <p className="text-sm text-gray-400 mt-2">검색하면 해당 장소의 신분증 사용 가능 여부를 즉시 보여줍니다.</p>
+
+        {/* 검색 결과 */}
+        {searchResult ? (
+          <div className="mt-4 bg-gray-800 p-4 rounded-md text-white">
+            <h3 className="text-lg font-bold mb-2">{searchResult.name}</h3>
+            <div className="flex gap-4 items-center mb-3">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-id-card text-xl"></i>
+                <span>주민등록증: </span>
+                {searchResult.accepts.residentID ? <span className="text-green-400 font-bold">사용 가능</span> : <span className="text-gray-400">확인 불가</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-car text-xl"></i>
+                <span>운전면허증: </span>
+                {searchResult.accepts.driverLicense ? <span className="text-green-400 font-bold">사용 가능</span> : <span className="text-gray-400">확인 불가</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-book-medical text-xl"></i>
+                <span>건강보험증: </span>
+                {searchResult.accepts.healthInsurance ? <span className="text-green-400 font-bold">사용 가능</span> : <span className="text-gray-400">확인 불가</span>}
+              </div>
+            </div>
+
+            {/* 최신 리포트 */}
+            {searchResult.reports && searchResult.reports.length > 0 && (
+              <div className="mt-2">
+                <h4 className="font-semibold mb-2">최신 리포트</h4>
+                <ul className="space-y-2">
+                  {searchResult.reports.map((r, i) => (
+                    <li key={i} className={`p-2 rounded-md ${r.success ? 'bg-green-900/40' : 'bg-red-900/30'}`}>
+                      <div className="text-sm">{r.message}</div>
+                      <div className="text-xs text-gray-400">{r.ts}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          query && <div className="mt-4 text-sm text-gray-400">검색 결과가 없습니다. 가까운 이름 또는 주소로 다시 시도하세요.</div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
       {cards.map((card, index) => {
         // 6번째 카드(index 5)일 때 광고 표시
         if (card.type === 'ad') {
