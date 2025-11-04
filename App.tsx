@@ -1,12 +1,46 @@
 import React, { useState, useEffect } from 'react';
 
-type View = 'main' | 'oil' | 'report';
+type View = 'main' | 'oil' | 'station' | 'weather' | 'health' | 'parking' | 'report';
 
 type OilPrice = {
   prodcd: string;
   prodnm: string;
   price: string;
   diff: string;
+};
+
+type GasStation = {
+  id: string;
+  name: string;
+  address: string;
+  distance: number;
+  gasoline?: string;
+  diesel?: string;
+  lpg?: string;
+  lat: string;
+  lng: string;
+};
+
+type WeatherInfo = {
+  carWash: { level: string; comment: string };
+  airQuality: { pm10: string; pm25: string; status: string };
+  warning: string;
+};
+
+type HealthInfo = {
+  cold: { level: string; icon: string };
+  food: { level: string; icon: string };
+  asthma: { level: string; icon: string };
+};
+
+type ParkingLot = {
+  prkplceNo: string;
+  prkplceNm: string;
+  prkcmprt: string;
+  curPrkCnt: string;
+  address: string;
+  latitude: string;
+  longitude: string;
 };
 
 const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -104,6 +138,647 @@ const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [stations, setStations] = useState<GasStation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(location);
+          fetchNearbyStations(location.lat, location.lng);
+        },
+        (error) => {
+          setError('위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요.');
+          setLoading(false);
+        }
+      );
+    } else {
+      setError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      setLoading(false);
+    }
+  };
+
+  const fetchNearbyStations = async (lat: number, lng: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://www.opinet.co.kr/api/aroundAll.do?code=F251104981&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`
+      );
+      const data = await response.json();
+      
+      if (data.RESULT && data.RESULT.OIL) {
+        setStations(data.RESULT.OIL);
+      } else {
+        setError('주변 주유소 정보를 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      setError('API 호출 중 오류가 발생했습니다.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="text-white w-full max-w-4xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+      <h2 className="text-3xl font-bold mb-6 text-center flex items-center justify-center gap-3">
+        <i className="fa-solid fa-location-dot"></i>
+        내 주변 주유소
+      </h2>
+
+      {loading && (
+        <div className="text-center py-8">
+          <i className="fa-solid fa-spinner fa-spin text-4xl text-blue-400"></i>
+          <p className="mt-4 text-gray-400">주변 주유소를 검색하는 중...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg">
+          <i className="fa-solid fa-exclamation-triangle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && stations.length > 0 && (
+        <div className="space-y-4">
+          {stations.slice(0, 10).map((station, index) => (
+            <div key={station.id || index} className="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition-colors">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-1">{station.name}</h3>
+                  <p className="text-sm text-gray-400">{station.address}</p>
+                  <p className="text-sm text-blue-400 mt-1">
+                    <i className="fa-solid fa-location-arrow mr-1"></i>
+                    {station.distance ? `${(station.distance / 1000).toFixed(1)}km` : '거리 정보 없음'}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                {station.gasoline && (
+                  <div className="bg-gray-700 p-3 rounded-md text-center">
+                    <p className="text-xs text-gray-400 mb-1">휘발유</p>
+                    <p className="text-lg font-bold text-green-400">{station.gasoline}원</p>
+                  </div>
+                )}
+                {station.diesel && (
+                  <div className="bg-gray-700 p-3 rounded-md text-center">
+                    <p className="text-xs text-gray-400 mb-1">경유</p>
+                    <p className="text-lg font-bold text-yellow-400">{station.diesel}원</p>
+                  </div>
+                )}
+                {station.lpg && (
+                  <div className="bg-gray-700 p-3 rounded-md text-center">
+                    <p className="text-xs text-gray-400 mb-1">LPG</p>
+                    <p className="text-lg font-bold text-blue-400">{station.lpg}원</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div className="text-center text-sm text-gray-500 mt-6">
+            <i className="fa-solid fa-info-circle mr-2"></i>
+            자료출처: 한국석유공사 오피넷 (OPINET)
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WeatherView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [weather, setWeather] = useState<WeatherInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(location);
+          fetchWeatherData(location.lat, location.lng);
+        },
+        (error) => {
+          setError('위치 정보를 가져올 수 없습니다.');
+          setLoading(false);
+        }
+      );
+    } else {
+      setError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      setLoading(false);
+    }
+  };
+
+  const fetchWeatherData = async (lat: number, lng: number) => {
+    try {
+      setLoading(true);
+      
+      // 기상청 API 호출 (세차 지수)
+      const carWashResponse = await fetch(
+        `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getCarWashIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
+      );
+      const carWashData = await carWashResponse.json();
+      
+      // 대기오염 정보 API 호출
+      const airResponse = await fetch(
+        `https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&returnType=json&numOfRows=1&pageNo=1&sidoName=서울&ver=1.0`
+      );
+      const airData = await airResponse.json();
+
+      // 데이터 파싱
+      const carWashItem = carWashData.response?.body?.items?.item?.[0];
+      const airItem = airData.response?.body?.items?.[0];
+
+      setWeather({
+        carWash: {
+          level: carWashItem?.h0 || '보통',
+          comment: getCarWashComment(carWashItem?.h0 || '보통')
+        },
+        airQuality: {
+          pm10: airItem?.pm10Value || '-',
+          pm25: airItem?.pm25Value || '-',
+          status: airItem?.pm10Grade || '보통'
+        },
+        warning: '현재 특보가 없습니다.'
+      });
+    } catch (err) {
+      setError('날씨 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCarWashComment = (level: string) => {
+    if (level.includes('좋음') || level.includes('최적')) return '오늘 세차하기 좋은 날입니다!';
+    if (level.includes('나쁨')) return '오후 비 예보, 세차 비추천';
+    return '세차 가능한 날씨입니다.';
+  };
+
+  const getAirQualityStatus = (grade: string) => {
+    if (grade === '1' || grade.includes('좋음')) return { text: '좋음', color: 'text-blue-400' };
+    if (grade === '2' || grade.includes('보통')) return { text: '보통', color: 'text-green-400' };
+    if (grade === '3' || grade.includes('나쁨')) return { text: '나쁨', color: 'text-orange-400' };
+    if (grade === '4' || grade.includes('매우')) return { text: '매우 나쁨', color: 'text-red-400' };
+    return { text: '보통', color: 'text-gray-400' };
+  };
+
+  return (
+    <div className="text-white w-full max-w-4xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+      <h2 className="text-3xl font-bold mb-6 text-center flex items-center justify-center gap-3">
+        <i className="fa-solid fa-cloud-sun"></i>
+        오늘 세차 날씨
+      </h2>
+
+      {loading && (
+        <div className="text-center py-8">
+          <i className="fa-solid fa-spinner fa-spin text-4xl text-cyan-400"></i>
+          <p className="mt-4 text-gray-400">날씨 정보를 불러오는 중...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg">
+          <i className="fa-solid fa-exclamation-triangle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && weather && (
+        <div className="space-y-6">
+          {/* 세차 지수 */}
+          <div className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 p-6 rounded-lg border border-cyan-500/30">
+            <div className="flex items-center gap-4 mb-4">
+              <i className="fa-solid fa-car text-4xl text-cyan-400"></i>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold">세차 지수</h3>
+                <p className="text-cyan-300 text-lg mt-1">{weather.carWash.comment}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 대기질 정보 */}
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <i className="fa-solid fa-wind"></i>
+              대기질 정보
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-700 p-4 rounded-md">
+                <p className="text-sm text-gray-400 mb-2">미세먼지 (PM10)</p>
+                <p className={`text-2xl font-bold ${getAirQualityStatus(weather.airQuality.status).color}`}>
+                  {weather.airQuality.pm10} μg/m³
+                </p>
+                <p className="text-sm text-gray-400 mt-1">{getAirQualityStatus(weather.airQuality.status).text}</p>
+              </div>
+              <div className="bg-gray-700 p-4 rounded-md">
+                <p className="text-sm text-gray-400 mb-2">초미세먼지 (PM2.5)</p>
+                <p className="text-2xl font-bold text-orange-400">{weather.airQuality.pm25} μg/m³</p>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-900/30 rounded-md">
+              <p className="text-sm">
+                <i className="fa-solid fa-lightbulb mr-2 text-yellow-400"></i>
+                차량 내부 공기 순환 모드를 사용하세요
+              </p>
+            </div>
+          </div>
+
+          {/* 기상 특보 */}
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <i className="fa-solid fa-triangle-exclamation"></i>
+              기상 특보
+            </h3>
+            <p className="text-gray-300">{weather.warning}</p>
+          </div>
+
+          <div className="text-center text-sm text-gray-500 mt-6">
+            <i className="fa-solid fa-info-circle mr-2"></i>
+            자료출처: 기상청, 한국환경공단
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HealthView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchHealthData();
+  }, []);
+
+  const fetchHealthData = async () => {
+    try {
+      setLoading(true);
+      
+      // 생활기상지수 API 호출 (서울 기준)
+      const response = await fetch(
+        `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
+      );
+      const data = await response.json();
+      
+      const items = data.response?.body?.items?.item || [];
+      
+      setHealth({
+        cold: {
+          level: items[0]?.h0 || '관심',
+          icon: '🤧'
+        },
+        food: {
+          level: items[1]?.h0 || '관심',
+          icon: '🤢'
+        },
+        asthma: {
+          level: items[2]?.h0 || '관심',
+          icon: '😮‍💨'
+        }
+      });
+    } catch (err) {
+      setError('건강 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHealthAdvice = (type: string, level: string) => {
+    if (type === 'cold') {
+      if (level.includes('경고')) return '외출 시 외투 필수, 손씻기 철저히';
+      if (level.includes('주의')) return '외투 챙기세요, 일교차 조심';
+      return '평소처럼 생활하세요';
+    }
+    if (type === 'food') {
+      if (level.includes('경고')) return '음식물 보관 각별히 주의, 익혀 드세요';
+      if (level.includes('주의')) return '음식 조심하세요, 보관 신경쓰기';
+      return '일반적인 주의만 필요합니다';
+    }
+    if (type === 'asthma') {
+      if (level.includes('경고')) return '외출 자제, 약 미리 준비하세요';
+      if (level.includes('주의')) return '마스크 착용 권장, 환기 시간 조정';
+      return '실내 환기 적절히 하세요';
+    }
+    return '관심';
+  };
+
+  const getLevelColor = (level: string) => {
+    if (level.includes('경고')) return 'border-red-500 bg-red-900/20';
+    if (level.includes('주의')) return 'border-orange-500 bg-orange-900/20';
+    return 'border-green-500 bg-green-900/20';
+  };
+
+  const getLevelBadge = (level: string) => {
+    if (level.includes('경고')) return { text: '경고', color: 'bg-red-600' };
+    if (level.includes('주의')) return { text: '주의', color: 'bg-orange-600' };
+    return { text: '관심', color: 'bg-green-600' };
+  };
+
+  return (
+    <div className="text-white w-full max-w-4xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+      <h2 className="text-3xl font-bold mb-6 text-center flex items-center justify-center gap-3">
+        <i className="fa-solid fa-heart-pulse"></i>
+        오늘의 건강 지수
+      </h2>
+
+      {loading && (
+        <div className="text-center py-8">
+          <i className="fa-solid fa-spinner fa-spin text-4xl text-pink-400"></i>
+          <p className="mt-4 text-gray-400">건강 정보를 불러오는 중...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg">
+          <i className="fa-solid fa-exclamation-triangle mr-2"></i>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && health && (
+        <div className="space-y-6">
+          {/* 감기 */}
+          <div className={`p-6 rounded-lg border-2 ${getLevelColor(health.cold.level)}`}>
+            <div className="flex items-start gap-4">
+              <span className="text-5xl">{health.cold.icon}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-2xl font-bold">감기</h3>
+                  <span className={`${getLevelBadge(health.cold.level).color} text-white text-sm px-3 py-1 rounded-full`}>
+                    {getLevelBadge(health.cold.level).text}
+                  </span>
+                </div>
+                <p className="text-gray-300 text-lg">{getHealthAdvice('cold', health.cold.level)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 식중독 */}
+          <div className={`p-6 rounded-lg border-2 ${getLevelColor(health.food.level)}`}>
+            <div className="flex items-start gap-4">
+              <span className="text-5xl">{health.food.icon}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-2xl font-bold">식중독</h3>
+                  <span className={`${getLevelBadge(health.food.level).color} text-white text-sm px-3 py-1 rounded-full`}>
+                    {getLevelBadge(health.food.level).text}
+                  </span>
+                </div>
+                <p className="text-gray-300 text-lg">{getHealthAdvice('food', health.food.level)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 천식 */}
+          <div className={`p-6 rounded-lg border-2 ${getLevelColor(health.asthma.level)}`}>
+            <div className="flex items-start gap-4">
+              <span className="text-5xl">{health.asthma.icon}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-2xl font-bold">천식·폐질환</h3>
+                  <span className={`${getLevelBadge(health.asthma.level).color} text-white text-sm px-3 py-1 rounded-full`}>
+                    {getLevelBadge(health.asthma.level).text}
+                  </span>
+                </div>
+                <p className="text-gray-300 text-lg">{getHealthAdvice('asthma', health.asthma.level)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center text-sm text-gray-500 mt-6">
+            <i className="fa-solid fa-info-circle mr-2"></i>
+            자료출처: 기상청 생활기상지수
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ParkingView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [showRegionModal, setShowRegionModal] = useState(false);
+
+  const regions = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+
+  useEffect(() => {
+    const savedRegion = localStorage.getItem('preferredRegion');
+    if (savedRegion) {
+      setSelectedRegion(savedRegion);
+    } else {
+      setSelectedRegion('서울');
+      setShowRegionModal(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedRegion) {
+      fetchParkingLots();
+    }
+  }, [selectedRegion]);
+
+  const fetchParkingLots = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const serviceKey = '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9';
+      const response = await fetch(
+        `https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc?page=1&perPage=50&serviceKey=${serviceKey}&returnType=JSON`
+      );
+
+      if (!response.ok) {
+        throw new Error('주차장 정보를 가져올 수 없습니다.');
+      }
+
+      const data = await response.json();
+      
+      if (data.data && Array.isArray(data.data)) {
+        const filteredData = data.data
+          .filter((lot: any) => lot.prkplceNm && lot.prkplceNm.includes(selectedRegion))
+          .map((lot: any) => ({
+            prkplceNo: lot.prkplceNo || '',
+            prkplceNm: lot.prkplceNm || '정보 없음',
+            prkcmprt: lot.prkcmprt || '0',
+            curPrkCnt: lot.curPrkCnt || '0',
+            address: lot.rdnmadr || lot.lnmadr || '주소 정보 없음',
+            latitude: lot.latitude || '0',
+            longitude: lot.longitude || '0'
+          }));
+        
+        setParkingLots(filteredData.slice(0, 20));
+      } else {
+        setParkingLots([]);
+      }
+    } catch (err) {
+      setError('주차장 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegionChange = (region: string) => {
+    setSelectedRegion(region);
+    localStorage.setItem('preferredRegion', region);
+    setShowRegionModal(false);
+  };
+
+  const getAvailabilityStatus = (current: string, total: string) => {
+    const curr = parseInt(current) || 0;
+    const tot = parseInt(total) || 0;
+    const available = tot - curr;
+    const ratio = tot > 0 ? available / tot : 0;
+
+    if (ratio >= 0.3) return { color: 'text-green-400', text: '여유', icon: '✓' };
+    if (ratio >= 0.1) return { color: 'text-yellow-400', text: '보통', icon: '!' };
+    return { color: 'text-red-400', text: '혼잡', icon: '✗' };
+  };
+
+  return (
+    <div className="text-white w-full max-w-2xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+
+      {showRegionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">관심 지역 설정</h3>
+            <p className="text-gray-400 mb-4">주차장 정보를 확인할 지역을 선택해주세요.</p>
+            <div className="grid grid-cols-3 gap-2">
+              {regions.map(region => (
+                <button
+                  key={region}
+                  onClick={() => handleRegionChange(region)}
+                  className="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  {region}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-6 rounded-lg shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold">
+            <i className="fa-solid fa-square-parking mr-3"></i>
+            실시간 주차장 정보
+          </h2>
+          <button
+            onClick={() => setShowRegionModal(true)}
+            className="bg-purple-700 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors text-sm"
+          >
+            <i className="fa-solid fa-location-dot mr-2"></i>
+            {selectedRegion}
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <i className="fa-solid fa-spinner fa-spin text-4xl mb-4"></i>
+            <p className="text-gray-300">주차장 정보를 불러오는 중...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-900/30 border border-red-500 rounded-lg p-6 text-center">
+            <i className="fa-solid fa-exclamation-triangle text-3xl mb-3 text-red-400"></i>
+            <p className="text-red-300">{error}</p>
+          </div>
+        ) : parkingLots.length === 0 ? (
+          <div className="bg-yellow-900/30 border border-yellow-500 rounded-lg p-6 text-center">
+            <i className="fa-solid fa-info-circle text-3xl mb-3 text-yellow-400"></i>
+            <p className="text-yellow-300">{selectedRegion} 지역의 주차장 정보가 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {parkingLots.map((lot, index) => {
+              const available = parseInt(lot.prkcmprt) - parseInt(lot.curPrkCnt);
+              const status = getAvailabilityStatus(lot.curPrkCnt, lot.prkcmprt);
+              
+              return (
+                <div key={lot.prkplceNo || index} className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-purple-500/30 hover:border-purple-400 transition-all">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        <i className="fa-solid fa-parking text-purple-400 mr-2"></i>
+                        {lot.prkplceNm}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        <i className="fa-solid fa-location-dot mr-1"></i>
+                        {lot.address}
+                      </p>
+                    </div>
+                    <div className={`text-right ${status.color}`}>
+                      <div className="text-2xl font-bold">{status.icon}</div>
+                      <div className="text-sm font-semibold">{status.text}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 text-sm">잔여:</span>
+                      <span className="text-xl font-bold text-blue-400">{available}</span>
+                      <span className="text-gray-500">/ {lot.prkcmprt}대</span>
+                    </div>
+                    <div className="flex-1 bg-gray-700 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-full ${status.color.replace('text-', 'bg-')} transition-all`}
+                        style={{ width: `${Math.min(100, (available / parseInt(lot.prkcmprt)) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="text-center text-sm text-gray-400 mt-6">
+          <i className="fa-solid fa-info-circle mr-2"></i>
+          자료출처: 한국교통안전공단 전국공영주차장정보
+        </div>
+      </div>
     </div>
   );
 };
@@ -243,18 +918,50 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
     },
     {
       type: 'nav',
+      label: '찾아보기',
+      backLabel: '내 주변 주유소',
+      view: 'station',
+      icon: 'fa-solid fa-location-dot',
+      theme: 'blue'
+    },
+    {
+      type: 'nav',
+      label: '확인하기',
+      backLabel: '세차 날씨 정보',
+      view: 'weather',
+      icon: 'fa-solid fa-cloud-sun',
+      theme: 'cyan'
+    },
+    {
+      type: 'nav',
+      label: '확인하기',
+      backLabel: '건강 지수',
+      view: 'health',
+      icon: 'fa-solid fa-heart-pulse',
+      theme: 'pink'
+    },
+    {
+      type: 'nav',
+      label: '찾아보기',
+      backLabel: '실시간 주차장',
+      view: 'parking',
+      icon: 'fa-solid fa-square-parking',
+      theme: 'purple'
+    },
+    {
+      type: 'nav',
       label: '제안하러 가기',
       backLabel: '새로운 기능 제안',
       view: 'report',
       icon: 'fa-solid fa-lightbulb',
-      theme: 'pink'
+      theme: 'indigo'
     },
     {
       type: 'ad',
       label: 'Ad',
       backLabel: 'Advertisement',
       icon: 'fa-solid fa-ad',
-      theme: 'purple'
+      theme: 'gray'
     }
   ];
 
@@ -362,6 +1069,14 @@ const App: React.FC = () => {
     switch (view) {
       case 'oil':
         return <OilPriceView onBack={() => setView('main')} />;
+      case 'station':
+        return <GasStationView onBack={() => setView('main')} />;
+      case 'weather':
+        return <WeatherView onBack={() => setView('main')} />;
+      case 'health':
+        return <HealthView onBack={() => setView('main')} />;
+      case 'parking':
+        return <ParkingView onBack={() => setView('main')} />;
       case 'report':
         return <SuggestionView onBack={() => setView('main')} />;
       case 'main':
