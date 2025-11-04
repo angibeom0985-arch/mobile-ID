@@ -1004,7 +1004,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       backLabel: '모바일 건강보험증',
       href: 'https://mobile-id2.car-hotissue.com/%eb%aa%a8%eb%b0%94%ec%9d%bc-%ea%b1%b4%ea%b0%95%eb%b3%b4%ed%97%98%ec%a6%9d-%eb%b0%9c%ea%b8%89/',
       icon: 'fa-solid fa-book-medical',
-      theme: 'orange'
+      theme: 'red'
     }
   ];
 
@@ -1015,7 +1015,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       backLabel: '오늘의 기름값',
       view: 'oil',
       icon: 'fa-solid fa-gas-pump',
-      theme: 'teal'
+      theme: 'orange'
     },
     {
       type: 'nav',
@@ -1023,7 +1023,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       backLabel: '내 주변 주유소',
       view: 'station',
       icon: 'fa-solid fa-location-dot',
-      theme: 'blue'
+      theme: 'indigo'
     },
     {
       type: 'nav',
@@ -1039,7 +1039,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       backLabel: '건강 지수',
       view: 'health',
       icon: 'fa-solid fa-heart-pulse',
-      theme: 'pink'
+      theme: 'rose'
     },
     {
       type: 'nav',
@@ -1058,11 +1058,11 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
             <i className="fa-solid fa-id-badge mr-3"></i>
-            모바일 신분증 발급
+            모바일 신분증 종류
           </h2>
           <p className="text-gray-400 text-sm md:text-base">발급 방법을 확인하고 바로 발급받으세요</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 justify-items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 justify-items-center max-w-4xl mx-auto">
           {issuanceCards.map((card, index) => {
             const cardContent = (
               <div className={`card ${card.theme}`}>
@@ -1100,6 +1100,16 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
               </a>
             );
           })}
+          
+          {/* 4번째 위치에 광고 추가 */}
+          <div className="flex items-center justify-center" style={{ width: '190px', height: '254px' }}>
+            <ins className="adsbygoogle"
+                 style={{ display: 'block', width: '190px', height: '254px' }}
+                 data-ad-client="ca-pub-2686975437928535"
+                 data-ad-slot="1992799632"
+                 data-ad-format="auto"
+                 data-full-width-responsive="false"></ins>
+          </div>
         </div>
       </section>
 
