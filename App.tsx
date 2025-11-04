@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { collection, getDocs, query as firestoreQuery, orderBy, limit, doc, setDoc } from 'firebase/firestore';
+import { db } from './firebase.config';
 
-type View = 'main' | 'community' | 'report';
+type View = 'main' | 'community' | 'report' | 'admin';
 
 // 간단한 장소 DB 샘플 (관리자가 입력하는 CPT 형태의 데이터 예시)
 type Place = {
@@ -149,8 +151,118 @@ const SuggestionView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 };
 
+const AdminView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [placeName, setPlaceName] = useState('');
+  const [address, setAddress] = useState('');
+  const [residentID, setResidentID] = useState(false);
+  const [driverLicense, setDriverLicense] = useState(false);
+  const [healthInsurance, setHealthInsurance] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!placeName.trim()) {
+      alert('장소 이름을 입력하세요');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const newPlace = {
+        id: `p${Date.now()}`,
+        name: placeName,
+        address,
+        accepts: {
+          residentID,
+          driverLicense,
+          healthInsurance
+        },
+        reports: []
+      };
+
+      await setDoc(doc(db, 'places', newPlace.id), newPlace);
+      alert('장소가 추가되었습니다!');
+      setPlaceName('');
+      setAddress('');
+      setResidentID(false);
+      setDriverLicense(false);
+      setHealthInsurance(false);
+    } catch (error) {
+      console.error('저장 오류:', error);
+      alert('저장 실패. Firebase 설정을 확인하세요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="text-white w-full max-w-3xl mx-auto p-4 md:p-8">
+      <button onClick={onBack} className="mb-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+        <i className="fa-solid fa-arrow-left mr-2"></i> 뒤로가기
+      </button>
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h2 className="text-3xl font-bold mb-6">관리자 - 장소 추가</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-lg font-medium mb-2">장소 이름 *</label>
+            <input
+              type="text"
+              value={placeName}
+              onChange={(e) => setPlaceName(e.target.value)}
+              className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="예: 강남역 OO병원"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium mb-2">주소 (선택)</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full bg-gray-700 text-white p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="예: 서울시 강남구..."
+            />
+          </div>
+          <div className="bg-gray-700 p-4 rounded-md">
+            <p className="text-lg font-medium mb-3">사용 가능한 신분증</p>
+            <div className="space-y-2">
+              <label className="flex items-center cursor-pointer">
+                <input type="checkbox" checked={residentID} onChange={(e) => setResidentID(e.target.checked)} className="mr-3 w-5 h-5" />
+                <i className="fa-solid fa-id-card text-xl mr-2"></i>
+                <span>모바일 주민등록증</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input type="checkbox" checked={driverLicense} onChange={(e) => setDriverLicense(e.target.checked)} className="mr-3 w-5 h-5" />
+                <i className="fa-solid fa-car text-xl mr-2"></i>
+                <span>모바일 운전면허증</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input type="checkbox" checked={healthInsurance} onChange={(e) => setHealthInsurance(e.target.checked)} className="mr-3 w-5 h-5" />
+                <i className="fa-solid fa-book-medical text-xl mr-2"></i>
+                <span>모바일 건강보험증</span>
+              </label>
+            </div>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+          >
+            {saving ? '저장 중...' : '장소 추가'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }) => {
+  const [query, setQuery] = useState('');
+  const [searchResult, setSearchResult] = useState<Place | null>(null);
+  const [places, setPlaces] = useState<Place[]>(PLACE_DB);
+  const [suggestions, setSuggestions] = useState<Place[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
   useEffect(() => {
     // Google AdSense 광고 초기화
     const loadAds = () => {
@@ -166,13 +278,33 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       }
     };
     
-    // 광고 스크립트 로드 후 초기화
     const timer = setTimeout(loadAds, 100);
+    loadPlacesFromFirebase();
+    
+    // 검색 히스토리 로드
+    const saved = localStorage.getItem('searchHistory');
+    if (saved) {
+      setSearchHistory(JSON.parse(saved));
+    }
+    
     return () => clearTimeout(timer);
   }, []);
 
-  const [query, setQuery] = useState('');
-  const [searchResult, setSearchResult] = useState<Place | null>(null);
+  const loadPlacesFromFirebase = async () => {
+    try {
+      const placesQuery = firestoreQuery(collection(db, 'places'), orderBy('name'), limit(100));
+      const querySnapshot = await getDocs(placesQuery);
+      const firebasePlaces: Place[] = [];
+      querySnapshot.forEach((doc) => {
+        firebasePlaces.push(doc.data() as Place);
+      });
+      if (firebasePlaces.length > 0) {
+        setPlaces(firebasePlaces);
+      }
+    } catch (error) {
+      console.log('Firebase 로드 실패, 로컬 데이터 사용:', error);
+    }
+  };
 
   const handleSearch = () => {
     const q = query.trim().toLowerCase();
@@ -180,8 +312,39 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       setSearchResult(null);
       return;
     }
-    const found = PLACE_DB.find(p => p.name.toLowerCase().includes(q));
+    const found = places.find(p => p.name.toLowerCase().includes(q));
     setSearchResult(found || null);
+    setShowSuggestions(false);
+    
+    // 검색 히스토리 저장
+    if (found && !searchHistory.includes(found.name)) {
+      const newHistory = [found.name, ...searchHistory.slice(0, 9)];
+      setSearchHistory(newHistory);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    }
+  };
+
+  const handleInputChange = (value: string) => {
+    setQuery(value);
+    if (value.trim().length > 0) {
+      const filtered = places.filter(p => p.name.toLowerCase().includes(value.toLowerCase())).slice(0, 5);
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (place: Place) => {
+    setQuery(place.name);
+    setSearchResult(place);
+    setShowSuggestions(false);
+    
+    if (!searchHistory.includes(place.name)) {
+      const newHistory = [place.name, ...searchHistory.slice(0, 9)];
+      setSearchHistory(newHistory);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    }
   };
 
   const cards = [
@@ -239,18 +402,56 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       {/* 초간단 검색 UI */}
       <div className="w-full max-w-4xl mx-auto mb-6 px-2">
         <label className="sr-only">방문지 검색</label>
-        <div className="flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-            className="flex-1 p-3 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-teal-500"
-            placeholder="예: 강남역 OO병원, 역삼동 OO은행"
-            aria-label="방문지 검색"
-          />
+        <div className="flex gap-2 relative">
+          <div className="flex-1 relative">
+            <input
+              value={query}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+              onFocus={() => {if (query.trim()) setShowSuggestions(true);}}
+              className="w-full p-3 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-teal-500"
+              placeholder="예: 강남역 OO병원, 역삼동 OO은행"
+              aria-label="방문지 검색"
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((place, i) => (
+                  <div
+                    key={i}
+                    onClick={() => selectSuggestion(place)}
+                    className="p-3 hover:bg-gray-700 cursor-pointer border-b border-gray-700 last:border-b-0"
+                  >
+                    <div className="font-semibold">{place.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={handleSearch} className="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-md">검색</button>
         </div>
         <p className="text-sm text-gray-400 mt-2">검색하면 해당 장소의 신분증 사용 가능 여부를 즉시 보여줍니다.</p>
+
+        {/* 검색 히스토리 */}
+        {searchHistory.length > 0 && !query && (
+          <div className="mt-4">
+            <h4 className="text-sm text-gray-400 mb-2">최근 검색</h4>
+            <div className="flex flex-wrap gap-2">
+              {searchHistory.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setQuery(item);
+                    const found = places.find(p => p.name === item);
+                    if (found) setSearchResult(found);
+                  }}
+                  className="text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 px-3 py-1 rounded-full"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 검색 결과 */}
         {searchResult ? (
@@ -385,6 +586,18 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
              data-full-width-responsive="true"></ins>
       </div>
     </div>
+
+    {/* 관리자 접근 버튼 */}
+    <div className="mt-8 text-center">
+      <button
+        onClick={() => onNavigate('admin')}
+        className="text-gray-500 hover:text-gray-400 text-sm"
+      >
+        <i className="fa-solid fa-gear mr-2"></i>
+        관리자
+      </button>
+    </div>
+    </div>
   );
 };
 
@@ -398,6 +611,8 @@ const App: React.FC = () => {
         return <CommunityView onBack={() => setView('main')} />;
       case 'report':
         return <SuggestionView onBack={() => setView('main')} />;
+      case 'admin':
+        return <AdminView onBack={() => setView('main')} />;
       case 'main':
       default:
         return <MainView onNavigate={setView} />;
