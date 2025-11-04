@@ -43,7 +43,7 @@ export const API_ENDPOINTS = {
 /**
  * CORS 프록시 설정
  */
-export const CORS_PROXY = 'https://corsproxy.io/?';
+export const CORS_PROXY = 'https://api.allorigins.win/get?url=';
 
 /**
  * API 호출 헬퍼 함수

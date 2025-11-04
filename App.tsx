@@ -58,21 +58,17 @@ const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setError('');
       
       // CORS 우회를 위한 프록시 사용
-      const proxyUrl = 'https://corsproxy.io/?';
-      const apiUrl = encodeURIComponent('https://www.opinet.co.kr/api/avgAllPrice.do?code=F251104981&out=json');
+      const apiUrl = 'https://www.opinet.co.kr/api/avgAllPrice.do?code=F251104981&out=json';
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl + apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
+      const response = await fetch(proxyUrl);
       
       if (!response.ok) {
         throw new Error('네트워크 응답이 올바르지 않습니다.');
       }
       
-      const data = await response.json();
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
       
       if (data.RESULT && data.RESULT.OIL) {
         setOilPrices(data.RESULT.OIL);
@@ -233,18 +229,17 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://corsproxy.io/?';
-      const apiUrl = encodeURIComponent(
-        `https://www.opinet.co.kr/api/aroundAll.do?code=F251104981&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`
-      );
+      const apiUrl = `https://www.opinet.co.kr/api/aroundAll.do?code=F251104981&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl + apiUrl);
+      const response = await fetch(proxyUrl);
       
       if (!response.ok) {
         throw new Error('네트워크 응답이 올바르지 않습니다.');
       }
       
-      const data = await response.json();
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
       
       if (data.RESULT && data.RESULT.OIL) {
         setStations(data.RESULT.OIL);
@@ -389,21 +384,19 @@ const WeatherView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://corsproxy.io/?';
-      
       // 기상청 API 호출 (세차 지수)
-      const carWashUrl = encodeURIComponent(
-        `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getCarWashIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
-      );
-      const carWashResponse = await fetch(proxyUrl + carWashUrl);
-      const carWashData = await carWashResponse.json();
+      const carWashApiUrl = `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getCarWashIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`;
+      const carWashProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(carWashApiUrl)}`;
+      const carWashResponse = await fetch(carWashProxyUrl);
+      const carWashProxyData = await carWashResponse.json();
+      const carWashData = JSON.parse(carWashProxyData.contents);
       
       // 대기오염 정보 API 호출
-      const airUrl = encodeURIComponent(
-        `https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&returnType=json&numOfRows=1&pageNo=1&sidoName=서울&ver=1.0`
-      );
-      const airResponse = await fetch(proxyUrl + airUrl);
-      const airData = await airResponse.json();
+      const airApiUrl = `https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&returnType=json&numOfRows=1&pageNo=1&sidoName=서울&ver=1.0`;
+      const airProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(airApiUrl)}`;
+      const airResponse = await fetch(airProxyUrl);
+      const airProxyData = await airResponse.json();
+      const airData = JSON.parse(airProxyData.contents);
 
       // 데이터 파싱
       const carWashItem = carWashData.response?.body?.items?.item?.[0];
@@ -539,13 +532,12 @@ const HealthView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://corsproxy.io/?';
-      const apiUrl = encodeURIComponent(
-        `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`
-      );
+      const apiUrl = `https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx?serviceKey=440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9&numOfRows=10&pageNo=1&dataType=JSON&areaNo=1100000000`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl + apiUrl);
-      const data = await response.json();
+      const response = await fetch(proxyUrl);
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
       
       const items = data.response?.body?.items?.item || [];
       
@@ -715,19 +707,18 @@ const ParkingView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setLoading(true);
       setError('');
       
-      const proxyUrl = 'https://corsproxy.io/?';
       const serviceKey = '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9';
-      const apiUrl = encodeURIComponent(
-        `https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc?page=1&perPage=50&serviceKey=${serviceKey}&returnType=JSON`
-      );
+      const apiUrl = `https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc?page=1&perPage=50&serviceKey=${serviceKey}&returnType=JSON`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl + apiUrl);
+      const response = await fetch(proxyUrl);
 
       if (!response.ok) {
         throw new Error('주차장 정보를 가져올 수 없습니다.');
       }
 
-      const data = await response.json();
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
       
       if (data.data && Array.isArray(data.data)) {
         const filteredData = data.data
