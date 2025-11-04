@@ -883,7 +883,7 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
     return () => clearTimeout(timer);
   }, []);
 
-  const cards = [
+  const issuanceCards = [
     {
       type: 'link',
       label: '발급 바로가기',
@@ -907,7 +907,10 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       href: 'https://mobile-id2.car-hotissue.com/%eb%aa%a8%eb%b0%94%ec%9d%bc-%ea%b1%b4%ea%b0%95%eb%b3%b4%ed%97%98%ec%a6%9d-%eb%b0%9c%ea%b8%89/',
       icon: 'fa-solid fa-book-medical',
       theme: 'orange'
-    },
+    }
+  ];
+
+  const featureCards = [
     {
       type: 'nav',
       label: '확인하러 가기',
@@ -947,41 +950,82 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
       view: 'parking',
       icon: 'fa-solid fa-square-parking',
       theme: 'purple'
-    },
-    {
-      type: 'nav',
-      label: '제안하러 가기',
-      backLabel: '새로운 기능 제안',
-      view: 'report',
-      icon: 'fa-solid fa-lightbulb',
-      theme: 'indigo'
-    },
-    {
-      type: 'ad',
-      label: 'Ad',
-      backLabel: 'Advertisement',
-      icon: 'fa-solid fa-ad',
-      theme: 'gray'
     }
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-2">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-8 justify-items-center">
-      {cards.map((card, index) => {
-        // 6번째 카드(index 5)일 때 광고 표시
-        if (card.type === 'ad') {
-          return (
-            <div key={index} className={`card ${card.theme}`}>
+    <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-12">
+      {/* 발급 방법 섹션 */}
+      <section>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <i className="fa-solid fa-id-badge mr-3"></i>
+            모바일 신분증 발급
+          </h2>
+          <p className="text-gray-400 text-sm md:text-base">발급 방법을 확인하고 바로 발급받으세요</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 justify-items-center">
+          {issuanceCards.map((card, index) => {
+            const cardContent = (
+              <div className={`card ${card.theme}`}>
+                <div className="content">
+                  <div className="back">
+                    <div className="back-content">
+                      <i className={`text-5xl ${card.icon}`}></i>
+                      <strong>{card.backLabel}</strong>
+                    </div>
+                  </div>
+                  <div className="front">
+                    <div className="img">
+                      <div className="circle"></div>
+                      <div className="circle" id="right"></div>
+                      <div className="circle" id="bottom"></div>
+                    </div>
+                    <div className="front-content">
+                      <div className="description">
+                        <div className="title">
+                          <p className="title flex items-center gap-4">
+                            <i className={`text-2xl ${card.icon}`}></i>
+                            <strong>{card.label}</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+
+            return (
+              <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
+                {cardContent}
+              </a>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 기능 섹션 */}
+      <section>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <i className="fa-solid fa-compass mr-3"></i>
+            편리한 기능
+          </h2>
+          <p className="text-gray-400 text-sm md:text-base">다양한 정보를 한눈에 확인하세요</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 justify-items-center">
+          {featureCards.map((card, index) => (
+            <div 
+              key={index} 
+              className={`card ${card.theme} cursor-pointer`}
+              onClick={() => onNavigate(card.view as View)}
+            >
               <div className="content">
                 <div className="back">
                   <div className="back-content">
-                    <ins className="adsbygoogle"
-                         style={{ display: 'block', width: '100%', height: '100%' }}
-                         data-ad-client="ca-pub-2686975437928535"
-                         data-ad-slot="1992799632"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
+                    <i className={`text-5xl ${card.icon}`}></i>
+                    <strong>{card.backLabel}</strong>
                   </div>
                 </div>
                 <div className="front">
@@ -993,70 +1037,41 @@ const MainView: React.FC<{ onNavigate: (view: View) => void }> = ({ onNavigate }
                   <div className="front-content">
                     <div className="description">
                       <div className="title">
-                        <ins className="adsbygoogle"
-                             style={{ display: 'block', width: '100%', height: '100%' }}
-                             data-ad-client="ca-pub-2686975437928535"
-                             data-ad-slot="1992799632"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
+                        <p className="title flex items-center gap-4">
+                          <i className={`text-2xl ${card.icon}`}></i>
+                          <strong>{card.label}</strong>
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          );
-        }
-
-        const cardContent = (
-          <div className={`card ${card.theme}`} onClick={card.type === 'nav' ? () => onNavigate(card.view as View) : undefined}>
-            <div className="content">
-              <div className="back">
-                <div className="back-content">
-                  <i className={`text-5xl ${card.icon}`}></i>
-                  <strong>{card.backLabel}</strong>
-                </div>
-              </div>
-              <div className="front">
-                <div className="img">
-                  <div className="circle"></div>
-                  <div className="circle" id="right"></div>
-                  <div className="circle" id="bottom"></div>
-                </div>
-                <div className="front-content">
-                  <div className="description">
-                    <div className="title">
-                      <p className="title flex items-center gap-4">
-                         <i className={`text-2xl ${card.icon}`}></i>
-                        <strong>{card.label}</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-        if (card.type === 'link') {
-          return (
-            <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
-              {cardContent}
-            </a>
-          );
-        }
-        return <div key={index} className="cursor-pointer">{cardContent}</div>;
-      })}
-      
-        <div className="col-span-2 md:grid-cols-3 lg:col-span-5 w-full max-w-4xl mx-auto mt-8">
-          <ins className="adsbygoogle"
-               style={{ display: 'block' }}
-               data-ad-client="ca-pub-2686975437928535"
-               data-ad-slot="1992799632"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* 광고 섹션 */}
+      <section className="w-full max-w-4xl mx-auto">
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-pub-2686975437928535"
+             data-ad-slot="1992799632"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </section>
+
+      {/* 새로운 기능 제안 버튼 */}
+      <section className="text-center">
+        <button
+          onClick={() => onNavigate('report')}
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 hover:shadow-xl"
+        >
+          <i className="fa-solid fa-lightbulb mr-3 text-xl"></i>
+          <span className="text-lg">새로운 기능 제안하기</span>
+        </button>
+        <p className="text-gray-500 text-sm mt-4">더 나은 서비스를 위한 여러분의 의견을 들려주세요</p>
+      </section>
     </div>
   );
 };
