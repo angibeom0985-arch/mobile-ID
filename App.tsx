@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-// API Base URL - 개발환경과 프로덕션 환경 구분
-const API_BASE_URL = (import.meta.env && import.meta.env.MODE === 'production')
-  ? 'https://your-production-api.com' // TODO: 배포 후 실제 URL로 변경
-  : 'http://localhost:5000';
+// API Base URL - Vercel Serverless Functions 사용
+// 로컬: http://localhost:3000/api/...
+// 프로덕션: https://your-domain.vercel.app/api/...
+const API_BASE_URL = '';  // 상대 경로 사용 (같은 도메인의 /api 엔드포인트)
 
 type View = 'main' | 'oil' | 'station' | 'traffic';
 
