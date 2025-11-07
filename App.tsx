@@ -67,8 +67,8 @@ const MainView: React.FC = () => {
           <p className="text-gray-400 text-sm md:text-base">발급 방법을 확인하고 바로 발급받으세요</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 justify-items-center max-w-4xl mx-auto">
-          {issuanceCards.map((card, index) => {
-            const cardContent = (
+          {issuanceCards.map((card, index) => (
+            <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
               <div className={`card ${card.theme}`}>
                 <div className="content">
                   <div className="back">
@@ -96,14 +96,8 @@ const MainView: React.FC = () => {
                   </div>
                 </div>
               </div>
-            );
-
-            return (
-              <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
-                {cardContent}
-              </a>
-            );
-          })}
+            </a>
+          ))}
           
           {/* 4번째 위치에 광고 추가 */}
           <div className="flex items-center justify-center" style={{ width: '190px', height: '254px' }}>
