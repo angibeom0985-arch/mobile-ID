@@ -46,31 +46,68 @@ const OilPriceView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setError('');
       
       const apiUrl = `https://www.opinet.co.kr/api/avgAllPrice.do?code=${API_KEYS.OPINET}&out=json`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl);
+      // 여러 프록시 시도
+      const proxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+        `https://cors-anywhere.herokuapp.com/${apiUrl}`
+      ];
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let dataFetched = false;
+      
+      for (const proxyUrl of proxies) {
+        try {
+          const response = await fetch(proxyUrl, { 
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+          
+          if (response.ok) {
+            const proxyData = await response.json();
+            let data;
+            
+            // allorigins는 contents 속성 사용
+            if (proxyData.contents) {
+              data = JSON.parse(proxyData.contents);
+            } else {
+              data = proxyData;
+            }
+            
+            if (data?.RESULT?.OIL && Array.isArray(data.RESULT.OIL)) {
+              setOilPrices(data.RESULT.OIL);
+              dataFetched = true;
+              break;
+            }
+          }
+        } catch (proxyErr) {
+          console.log(`프록시 실패: ${proxyUrl}`, proxyErr);
+          continue;
+        }
       }
       
-      const proxyData = await response.json();
-      
-      if (!proxyData.contents) {
-        throw new Error('프록시에서 데이터를 받지 못했습니다.');
-      }
-      
-      const data = JSON.parse(proxyData.contents);
-      
-      if (data.RESULT && data.RESULT.OIL && Array.isArray(data.RESULT.OIL)) {
-        setOilPrices(data.RESULT.OIL);
-      } else {
-        throw new Error('API 응답 형식이 올바르지 않습니다.');
+      // 모든 프록시 실패시 실제 데이터 형식으로 더미 데이터 표시
+      if (!dataFetched) {
+        console.warn('모든 API 호출 실패, 샘플 데이터 표시');
+        setOilPrices([
+          { prodcd: 'B027', prodnm: '휘발유', price: '1,650.5', diff: '10.2' },
+          { prodcd: 'D047', prodnm: '경유', price: '1,520.3', diff: '-5.4' },
+          { prodcd: 'K015', prodnm: '고급휘발유', price: '1,950.7', diff: '15.1' },
+          { prodcd: 'C004', prodnm: 'LPG', price: '950.2', diff: '3.5' }
+        ]);
+        setError('실시간 데이터를 불러올 수 없어 참고용 데이터를 표시합니다.');
       }
       
     } catch (err) {
       console.error('유가 정보 로드 오류:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      // 오류 발생시에도 데이터 표시
+      setOilPrices([
+        { prodcd: 'B027', prodnm: '휘발유', price: '1,650.5', diff: '10.2' },
+        { prodcd: 'D047', prodnm: '경유', price: '1,520.3', diff: '-5.4' },
+        { prodcd: 'K015', prodnm: '고급휘발유', price: '1,950.7', diff: '15.1' },
+        { prodcd: 'C004', prodnm: 'LPG', price: '950.2', diff: '3.5' }
+      ]);
+      setError('데이터 로딩 중 오류가 발생했습니다. 참고용 데이터를 표시합니다.');
     } finally {
       setLoading(false);
     }
@@ -183,30 +220,101 @@ const GasStationView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setError('');
       
       const apiUrl = `https://www.opinet.co.kr/api/aroundAll.do?code=${API_KEYS.OPINET}&x=${lng}&y=${lat}&radius=5000&sort=1&prodcd=B027&out=json`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl);
+      const proxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`
+      ];
       
-      if (!response.ok) {
-        throw new Error('네트워크 응답이 올바르지 않습니다.');
+      let dataFetched = false;
+      
+      for (const proxyUrl of proxies) {
+        try {
+          const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+          
+          if (response.ok) {
+            const proxyData = await response.json();
+            let data;
+            
+            if (proxyData.contents) {
+              data = JSON.parse(proxyData.contents);
+            } else {
+              data = proxyData;
+            }
+            
+            if (data?.RESULT?.OIL && Array.isArray(data.RESULT.OIL)) {
+              setStations(data.RESULT.OIL);
+              dataFetched = true;
+              break;
+            }
+          }
+        } catch (proxyErr) {
+          console.log(`주유소 API 프록시 실패: ${proxyUrl}`, proxyErr);
+          continue;
+        }
       }
       
-      const proxyData = await response.json();
-      
-      if (!proxyData.contents) {
-        throw new Error('프록시에서 데이터를 받지 못했습니다.');
+      // 모든 프록시 실패시 더미 데이터
+      if (!dataFetched) {
+        console.warn('주유소 API 호출 실패, 샘플 데이터 표시');
+        setStations([
+          {
+            id: '1',
+            name: 'GS칼텍스 서울역점',
+            address: '서울특별시 용산구 한강대로',
+            distance: 500,
+            gasoline: '1,645',
+            diesel: '1,515',
+            lpg: '945',
+            lat: String(lat + 0.005),
+            lng: String(lng + 0.005)
+          },
+          {
+            id: '2',
+            name: 'SK에너지 시청주유소',
+            address: '서울특별시 중구 세종대로',
+            distance: 800,
+            gasoline: '1,650',
+            diesel: '1,520',
+            lpg: '950',
+            lat: String(lat + 0.007),
+            lng: String(lng + 0.007)
+          },
+          {
+            id: '3',
+            name: '현대오일뱅크 강남점',
+            address: '서울특별시 강남구 테헤란로',
+            distance: 1200,
+            gasoline: '1,639',
+            diesel: '1,509',
+            lpg: '940',
+            lat: String(lat + 0.01),
+            lng: String(lng + 0.01)
+          }
+        ]);
+        setError('실시간 데이터를 불러올 수 없어 참고용 데이터를 표시합니다.');
       }
       
-      const data = JSON.parse(proxyData.contents);
-      
-      if (data.RESULT && data.RESULT.OIL) {
-        setStations(data.RESULT.OIL);
-      } else {
-        throw new Error('주변 주유소 정보를 찾을 수 없습니다.');
-      }
     } catch (err) {
       console.error('주유소 정보 로드 오류:', err);
-      setError('주유소 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      // 오류시에도 데이터 표시
+      setStations([
+        {
+          id: '1',
+          name: 'GS칼텍스 주유소',
+          address: '현재 위치 근처',
+          distance: 500,
+          gasoline: '1,645',
+          diesel: '1,515',
+          lpg: '945',
+          lat: String(lat),
+          lng: String(lng)
+        }
+      ]);
+      setError('주유소 정보를 불러올 수 없어 참고용 데이터를 표시합니다.');
     } finally {
       setLoading(false);
     }
@@ -322,39 +430,74 @@ const TrafficView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setError('');
       
       const apiUrl = `http://data.ex.co.kr/api/trafficapi/trafficInfo?key=${API_KEYS.MOLIT_TRAFFIC}&type=json`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
-      const response = await fetch(proxyUrl);
+      const proxies = [
+        `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`
+      ];
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let dataFetched = false;
+      
+      for (const proxyUrl of proxies) {
+        try {
+          const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+          
+          if (response.ok) {
+            const proxyData = await response.json();
+            let data;
+            
+            if (proxyData.contents) {
+              data = JSON.parse(proxyData.contents);
+            } else {
+              data = proxyData;
+            }
+            
+            if (data?.list && Array.isArray(data.list)) {
+              const parsedData = data.list.slice(0, 20).map((item: any) => ({
+                routeName: item.routeName || '정보 없음',
+                startName: item.startName || '',
+                endName: item.endName || '',
+                congestion: item.congestion || '원활',
+                speed: item.speed || '-'
+              }));
+              setTrafficData(parsedData);
+              dataFetched = true;
+              break;
+            }
+          }
+        } catch (proxyErr) {
+          console.log(`도로 소통 API 프록시 실패: ${proxyUrl}`, proxyErr);
+          continue;
+        }
       }
       
-      const proxyData = await response.json();
-      
-      if (!proxyData.contents) {
-        throw new Error('프록시에서 데이터를 받지 못했습니다.');
-      }
-      
-      const data = JSON.parse(proxyData.contents);
-      
-      // API 응답 구조에 맞게 데이터 파싱
-      if (data && data.list) {
-        const parsedData = data.list.slice(0, 20).map((item: any) => ({
-          routeName: item.routeName || '정보 없음',
-          startName: item.startName || '',
-          endName: item.endName || '',
-          congestion: item.congestion || '원활',
-          speed: item.speed || '-'
-        }));
-        setTrafficData(parsedData);
-      } else {
-        throw new Error('도로 소통 데이터 형식이 올바르지 않습니다.');
+      // 모든 프록시 실패시 더미 데이터
+      if (!dataFetched) {
+        console.warn('도로 소통 API 호출 실패, 샘플 데이터 표시');
+        setTrafficData([
+          { routeName: '경부고속도로', startName: '서울', endName: '대전', congestion: '원활', speed: '100' },
+          { routeName: '영동고속도로', startName: '서울', endName: '강릉', congestion: '서행', speed: '70' },
+          { routeName: '서해안고속도로', startName: '서울', endName: '목포', congestion: '원활', speed: '95' },
+          { routeName: '중부고속도로', startName: '서울', endName: '대전', congestion: '원활', speed: '90' },
+          { routeName: '중부내륙고속도로', startName: '김천', endName: '여주', congestion: '정체', speed: '40' },
+          { routeName: '호남고속도로', startName: '논산', endName: '광주', congestion: '원활', speed: '100' },
+          { routeName: '남해고속도로', startName: '부산', endName: '순천', congestion: '서행', speed: '75' },
+          { routeName: '88올림픽고속도로', startName: '성남', endName: '대구', congestion: '원활', speed: '95' }
+        ]);
+        setError('실시간 데이터를 불러올 수 없어 참고용 데이터를 표시합니다.');
       }
       
     } catch (err) {
       console.error('도로 소통 정보 로드 오류:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      // 오류시에도 데이터 표시
+      setTrafficData([
+        { routeName: '경부고속도로', startName: '서울', endName: '부산', congestion: '원활', speed: '100' },
+        { routeName: '영동고속도로', startName: '서울', endName: '강릉', congestion: '원활', speed: '95' }
+      ]);
+      setError('도로 소통 정보를 불러올 수 없어 참고용 데이터를 표시합니다.');
     } finally {
       setLoading(false);
     }
