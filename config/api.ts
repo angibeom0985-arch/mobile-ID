@@ -17,6 +17,9 @@ export const API_KEYS = {
   // 한국석유공사 오피넷 API
   OPINET: getEnvVar('VITE_OPINET_API_KEY', 'F251104981'),
   
+  // 공공데이터포털 API (공통 키)
+  DATA_GO_KR: getEnvVar('VITE_DATA_GO_KR_API_KEY', '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9'),
+  
   // 국토교통부 실시간 주요 도로 상황 API
   MOLIT_TRAFFIC: getEnvVar('VITE_MOLIT_TRAFFIC_API_KEY', '67489c096aa949e0bd1c2e771ca6475b'),
 } as const;
@@ -31,9 +34,9 @@ export const API_ENDPOINTS = {
     AROUND_ALL: 'https://www.opinet.co.kr/api/aroundAll.do',
   },
   
-  // 국토교통부 도로 상황 API
-  MOLIT: {
-    ROAD_TRAFFIC: 'http://apis.data.go.kr/1613000/TrafficRoadEventService/getTrafficRoadEvent',
+  // 국토교통부 실시간 도로 소통 정보 API
+  MOLIT_TRAFFIC: {
+    BASE_URL: 'http://data.ex.co.kr/api/trafficapi/trafficInfo',
   },
 } as const;
 
