@@ -69,14 +69,29 @@ const MainView: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 justify-items-center max-w-4xl mx-auto">
           {issuanceCards.map((card, index) => (
             <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
-              <div className={`flip-card ${card.theme}`}>
-                <div className="flip-card-inner">
-                  <div className="flip-card-front">
-                    <i className={`card-icon ${card.icon}`}></i>
-                    <p className="card-title">{card.backLabel}</p>
+              <div className={`card ${card.theme}`}>
+                <div className="content">
+                  <div className="back">
+                    <div className="back-content">
+                      <i className={`text-5xl ${card.icon}`}></i>
+                      <strong>{card.backLabel}</strong>
+                    </div>
                   </div>
-                  <div className="flip-card-back">
-                    <p className="card-label">{card.label}</p>
+                  <div className="front">
+                    <div className="img">
+                      <div className="circle"></div>
+                      <div className="circle" id="right"></div>
+                      <div className="circle" id="bottom"></div>
+                    </div>
+                    <div className="front-content">
+                      <div className="description">
+                        <div className="title">
+                          <p className="title">
+                            <strong>{card.label}</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

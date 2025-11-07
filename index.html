@@ -10,89 +10,190 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <style>
-  /* From Uiverse.io by Praashoo7 */ 
-  .flip-card {
-    background-color: transparent;
-    width: 240px;
-    height: 154px;
-    perspective: 1000px;
-    color: white;
+  /* From Uiverse.io by ElSombrero2 */ 
+  .card {
+    overflow: visible;
+    width: 190px;
+    height: 254px;
   }
 
-  .flip-card-inner {
-    position: relative;
+  .content {
     width: 100%;
     height: 100%;
-    text-align: center;
-    transition: transform 0.8s;
     transform-style: preserve-3d;
+    transition: transform 300ms;
+    box-shadow: 0px 0px 10px 1px #000000ee;
+    border-radius: 5px;
   }
 
-  .flip-card:hover .flip-card-inner {
-    transform: rotateY(180deg);
-  }
-
-  .flip-card-front, .flip-card-back {
-    box-shadow: 0 8px 14px 0 rgba(0,0,0,0.2);
+  .front, .back {
+    background-color: #151515;
     position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .back {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .back::before {
+    position: absolute;
+    content: ' ';
+    display: block;
+    width: 160px;
+    height: 160%;
+    background: linear-gradient(90deg, transparent, #ff9966, #ff9966, #ff9966, #ff9966, transparent);
+    animation: rotation_481 5000ms infinite linear;
+  }
+
+  .back-content {
+    position: absolute;
+    width: 99%;
+    height: 99%;
+    background-color: #151515;
+    border-radius: 5px;
+    color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: 1rem;
+    align-items: center;
+    gap: 30px;
   }
 
-  .flip-card-front {
-    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 2px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -1px 0px inset;
-  }
-
-  .flip-card-back {
-    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 2px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -1px 0px inset;
-    background-color: #171717;
+  .card:hover .content {
     transform: rotateY(180deg);
   }
 
-  .card-icon {
+  @keyframes rotation_481 {
+    0% {
+      transform: rotateZ(0deg);
+    }
+
+    100% {
+      transform: rotateZ(360deg);
+    }
+  }
+
+  .front {
+    transform: rotateY(180deg);
+    color: white;
+  }
+
+  .front .front-content {
     position: absolute;
-    top: 1.5em;
-    left: 1.5em;
-    font-size: 2em;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  .card-title {
+  .front-content .badge {
+    background-color: #00000055;
+    padding: 2px 10px;
+    border-radius: 10px;
+    backdrop-filter: blur(2px);
+    width: fit-content;
+  }
+
+  .description {
+    box-shadow: 0px 0px 10px 5px #00000088;
+    width: 100%;
+    padding: 10px;
+    background-color: #00000099;
+    backdrop-filter: blur(5px);
+    border-radius: 5px;
+  }
+
+  .title {
+    font-size: 11px;
+    max-width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .title p {
+    width: 50%;
+  }
+
+  .card-footer {
+    color: #ffffff88;
+    margin-top: 5px;
+    font-size: 8px;
+  }
+
+  .front .img {
     position: absolute;
-    font-weight: bold;
-    font-size: 0.6em;
-    top: 8em;
-    left: 2em;
-    right: 2em;
-    text-align: center;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
-  .card-label {
-    position: absolute;
-    font-weight: bold;
-    font-size: 0.5em;
-    bottom: 1.5em;
-    left: 2em;
-    right: 2em;
-    text-align: center;
+  .circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-color: #ffbb66;
+    position: relative;
+    filter: blur(15px);
+    animation: floating 2600ms infinite linear;
   }
 
-  /* 색상 테마 */
-  .flip-card.blue .flip-card-front {
-    background: linear-gradient(135deg, rgb(30, 100, 230) 0%, rgb(100, 150, 255) 100%);
+  #bottom {
+    background-color: #ff8866;
+    left: 50px;
+    top: 0px;
+    width: 150px;
+    height: 150px;
+    animation-delay: -800ms;
   }
 
-  .flip-card.green .flip-card-front {
-    background: linear-gradient(135deg, rgb(20, 180, 80) 0%, rgb(80, 220, 130) 100%);
+  #right {
+    background-color: #ff2233;
+    left: 160px;
+    top: -80px;
+    width: 30px;
+    height: 30px;
+    animation-delay: -1800ms;
   }
 
-  .flip-card.red .flip-card-front {
-    background: linear-gradient(135deg, rgb(220, 30, 50) 0%, rgb(255, 80, 100) 100%);
+  @keyframes floating {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  /* 커스텀 색상 테마 */
+  .card.blue .back::before {
+    background: linear-gradient(90deg, transparent, rgb(30, 100, 230), rgb(100, 150, 255), rgb(150, 200, 255), rgb(100, 150, 255), transparent);
+  }
+
+  .card.green .back::before {
+    background: linear-gradient(90deg, transparent, rgb(20, 180, 80), rgb(80, 220, 130), rgb(150, 255, 180), rgb(80, 220, 130), transparent);
+  }
+
+  .card.red .back::before {
+    background: linear-gradient(90deg, transparent, rgb(220, 30, 50), rgb(255, 80, 100), rgb(255, 150, 170), rgb(255, 80, 100), transparent);
   }
 </style>
 
