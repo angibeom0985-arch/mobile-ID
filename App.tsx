@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // ==================== 메인 뷰 ====================
 const MainView: React.FC = () => {
+  const [showExitModal, setShowExitModal] = useState(false);
+
   useEffect(() => {
     const loadAds = () => {
       try {
@@ -27,6 +29,54 @@ const MainView: React.FC = () => {
     const timer = setTimeout(loadAds, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // 뒤로가기 감지 및 확인 대화상자
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setShowExitModal(true);
+    };
+
+    // 초기 히스토리 상태 추가
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  const handleExit = () => {
+    window.history.back();
+  };
+
+  const handleCancel = () => {
+    setShowExitModal(false);
+  };
+
+  // 모달이 열릴 때 광고 로드
+  useEffect(() => {
+    if (showExitModal) {
+      const timer = setTimeout(() => {
+        try {
+          if (typeof window !== 'undefined' && (window as any).adsbygoogle) {
+            const ads = document.querySelectorAll('.adsbygoogle:not([data-adsbygoogle-status])');
+            ads.forEach((ad) => {
+              try {
+                ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+              } catch (err) {
+                // 광고 로드 실패는 무시
+              }
+            });
+          }
+        } catch (e) {
+          // 광고 로드 실패는 조용히 처리
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showExitModal]);
 
   const issuanceCards = [
     {
@@ -108,6 +158,50 @@ const MainView: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* 종료 확인 모달 */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 space-y-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i className="fa-solid fa-door-open text-red-600 text-xl"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                앱을 종료하시겠습니까?
+              </h3>
+              <p className="text-sm text-gray-500">
+                종료하시면 처음 화면으로 돌아갑니다
+              </p>
+            </div>
+
+            {/* 광고 영역 */}
+            <div className="flex justify-center bg-gray-50 rounded-lg p-4">
+              <ins className="adsbygoogle"
+                   style={{ display: 'block', width: '300px', height: '250px' }}
+                   data-ad-client="ca-pub-2686975437928535"
+                   data-ad-slot="1992799632"
+                   data-ad-format="auto"
+                   data-full-width-responsive="false"></ins>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancel}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleExit}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                종료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
