@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #result {
+            background: #f0f0f0;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>백엔드 API 테스트</h1>
+    
+    <button onclick="testHealth()">Health Check</button>
+    <button onclick="testOilPrice()">유가 정보 테스트</button>
+    <button onclick="testStations()">주유소 테스트</button>
+    <button onclick="testTraffic()">교통정보 테스트</button>
+    
+    <div id="result">결과가 여기에 표시됩니다...</div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const resultDiv = document.getElementById('result');
+        
+        async function testHealth() {
+            try {
+                resultDiv.textContent = 'Health Check 요청 중...';
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testOilPrice() {
+            try {
+                resultDiv.textContent = '유가 정보 요청 중...';
+                const response = await fetch(`${API_BASE}/api/oil-price`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testStations() {
+            try {
+                resultDiv.textContent = '주유소 정보 요청 중...';
+                const response = await fetch(`${API_BASE}/api/nearby-stations?lat=37.5665&lng=126.9780`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testTraffic() {
+            try {
+                resultDiv.textContent = '교통정보 요청 중...';
+                const response = await fetch(`${API_BASE}/api/traffic-info`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
