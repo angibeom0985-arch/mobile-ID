@@ -86,8 +86,7 @@ const MainView: React.FC = () => {
                     <div className="front-content">
                       <div className="description">
                         <div className="title">
-                          <p className="title flex items-center gap-4">
-                            <i className={`text-2xl ${card.icon}`}></i>
+                          <p className="title">
                             <strong>{card.label}</strong>
                           </p>
                         </div>
