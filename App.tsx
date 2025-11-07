@@ -65,7 +65,7 @@ const MainView: React.FC = () => {
             모바일 신분증 종류
           </h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 justify-items-center max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-6 md:gap-6 justify-items-center max-w-4xl mx-auto">
           {issuanceCards.map((card, index) => (
             <a key={index} href={card.href}>
               <div className={`card ${card.theme}`}>
