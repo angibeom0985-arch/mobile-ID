@@ -64,11 +64,10 @@ const MainView: React.FC = () => {
             <i className="fa-solid fa-id-badge mr-3"></i>
             모바일 신분증 종류
           </h2>
-          <p className="text-gray-400 text-sm md:text-base">발급 방법을 확인하고 바로 발급받으세요</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 justify-items-center max-w-4xl mx-auto">
           {issuanceCards.map((card, index) => (
-            <a key={index} href={card.href} target="_blank" rel="noopener noreferrer">
+            <a key={index} href={card.href}>
               <div className={`card ${card.theme}`}>
                 <div className="content">
                   <div className="back">
