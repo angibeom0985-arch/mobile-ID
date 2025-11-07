@@ -5,12 +5,20 @@
  * 실제 배포 시에는 환경변수(.env.local)를 통해 관리됩니다.
  */
 
+// 환경 변수 안전하게 가져오기
+const getEnvVar = (key: keyof ImportMetaEnv, defaultValue: string): string => {
+  if (typeof import.meta.env !== 'undefined' && import.meta.env[key]) {
+    return import.meta.env[key] as string;
+  }
+  return defaultValue;
+};
+
 export const API_KEYS = {
   // 한국석유공사 오피넷 API
-  OPINET: import.meta.env.VITE_OPINET_API_KEY || 'F251104981',
+  OPINET: getEnvVar('VITE_OPINET_API_KEY', 'F251104981'),
   
-  // 공공데이터포털 API (공통 키)
-  DATA_GO_KR: import.meta.env.VITE_DATA_GO_KR_API_KEY || '440b7e60c6b66d63a729eb1f3bba1e874e932953b50572fb21f1ce0c28342fc9',
+  // 국토교통부 실시간 주요 도로 상황 API
+  MOLIT_TRAFFIC: getEnvVar('VITE_MOLIT_TRAFFIC_API_KEY', '67489c096aa949e0bd1c2e771ca6475b'),
 } as const;
 
 /**
@@ -23,20 +31,9 @@ export const API_ENDPOINTS = {
     AROUND_ALL: 'https://www.opinet.co.kr/api/aroundAll.do',
   },
   
-  // 기상청 API
-  WEATHER: {
-    CAR_WASH_IDX: 'https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getCarWashIdx',
-    WTHR_WRNNG_IDX: 'https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getWthrWrnngIdx',
-  },
-  
-  // 환경부 대기오염 정보 API
-  AIR_QUALITY: {
-    CTPRVN_RLTM_MESURE_DNSTY: 'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty',
-  },
-  
-  // 주차장 정보 API
-  PARKING: {
-    ODCLOUD: 'https://api.odcloud.kr/api/15050093/v1/uddi:41944402-8249-4e45-9e9d-a52d0a7db1cc',
+  // 국토교통부 도로 상황 API
+  MOLIT: {
+    ROAD_TRAFFIC: 'http://apis.data.go.kr/1613000/TrafficRoadEventService/getTrafficRoadEvent',
   },
 } as const;
 
