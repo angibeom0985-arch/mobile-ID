@@ -86,7 +86,7 @@ const MainView: React.FC = () => {
                     <div className="front-content">
                       <div className="description">
                         <div className="title">
-                          <p className="title">
+                          <p>
                             <strong>{card.label}</strong>
                           </p>
                         </div>
@@ -97,6 +97,16 @@ const MainView: React.FC = () => {
               </div>
             </a>
           ))}
+          
+          {/* 4번째 위치에 광고 추가 */}
+          <div className="flex items-center justify-center" style={{ width: '190px', height: '254px' }}>
+            <ins className="adsbygoogle"
+                 style={{ display: 'block', width: '190px', height: '254px' }}
+                 data-ad-client="ca-pub-2686975437928535"
+                 data-ad-slot="1992799632"
+                 data-ad-format="auto"
+                 data-full-width-responsive="false"></ins>
+          </div>
         </div>
       </section>
     </div>
